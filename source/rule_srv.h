@@ -16,7 +16,7 @@ struct RuleServer {
     static void handle_mods(const httplib::Request& req, httplib::Response& res) noexcept;
     static constexpr auto mods_URI = "/mods"s;
 
-    static void handle_signal(const httplib::Request& req, httplib::Response& res) noexcept;
-    static constexpr auto signal_URI = "/signal"s;
+    static void handle_switch(const httplib::Request& req, httplib::Response& res) noexcept;
+    static constexpr auto switch_URI = "/switch"s;
     static void testInit();
 };

@@ -2,8 +2,10 @@
 // #include "vswitch_cfg.h"
 #include <algorithm>
 #include <csignal>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <ios>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
@@ -184,108 +186,264 @@ public:
 
 /*++++++++++++SWITCHER CTRL+++++++*/
 
-/*TODO:
-- switch "button" API - sending signal!
-*/
 
-class Switcher : public RuleI{
-private:
-    atomic<bool> active = {false};
-public:
-    json toJson()const noexcept override{
-        return json{
-            {"enabled", active.load()},
-            // {"signal", source},
-            {"type", RuleType::Switcher}
-        };
+//! for VirtSwitch|API|GPIO inheritance - meybe agregation is better
+struct SwitchI{
+    explicit SwitchI(string name){
+        n_ = name;
+        regist();
     }
-    void fromJson(ConstRef<json> j) noexcept(false) override{
-        active = j.at("enabled");
-        // source = j.at("signal");
-        // if(source.empty()) throw logic_error("invalid source");
-    }
-    bool isActive()const override{ return active;}
-    void on(){active = true;}
-    void off(){active = false;}
-    void set(const bool state){active = state;}
-    // string source; //signal name for tests - move out!
-    //source - signal name or switcher - external manager?
-};
-
-struct Signal{
-    std::string name;
-    bool new_state = false; //on = true, off = false
-};
-
-struct SwitchMgr{
-    unordered_map<string, shared_ptr<Switcher>> switchers; //may live on weak_ptr
-    static SwitchMgr& instance();
-    //! call when rule added
-    bool registerSwitch(string source, shared_ptr<Switcher> sw);
-    //! call when 
-    void unregister(ConstRef<string> n);
-    void notify(ConstRef<Signal> signal);
-    void printSws(){
-        cout << "switchers: \n";
-        for(const auto &x : switchers){
-            cout << x.first << endl;
+    virtual ~SwitchI(){
+        if(registered){
+            switches.erase(n_);
         }
     }
-
-    private:
-    SwitchMgr() = default;
-};
-
-
-struct SwitchPolicy : public Policy{
-    string signal;
-    virtual ~SwitchPolicy(){
-        if(!signal.empty() && registered){
-            // cout << __func__ << endl;
-            SwitchMgr::instance().unregister(signal);
-        }
+    SwitchI(SwitchI && p){
+        swap(p);
     }
-    virtual string type() const override {return "switch_policy";}
-    json toJson() const override{
-        auto j = Policy::toJson();
-        j["signal"] = signal;
-        return j;
-    }
-
-    void registerToMgr(){
-        registered = SwitchMgr::instance().registerSwitch(signal, dynamic_pointer_cast<Switcher>(rule));
-    }
-    SwitchPolicy() = default;//{cout << __func__ << endl;}
-    SwitchPolicy(SwitchPolicy&& r){
-        this->swap(r);
-    };
-    SwitchPolicy& operator =(SwitchPolicy && p){
-        if(this != &p){
-            this->swap(p);
+    SwitchI& operator=(SwitchI&& p){
+        if(this != std::addressof(p)){
+            swap(p);
         }
         return *this;
     }
 
-    SwitchPolicy(const SwitchPolicy&) = delete;
-    SwitchPolicy& operator =(ConstRef<SwitchPolicy>) = delete;
-    
-private:
-    void swap(SwitchPolicy& r){
-        signal.swap(r.signal);
-        std::swap(registered, r.registered);
-        // from parent policy
-        rule.swap(r.rule);
-        targets.swap(r.targets);
+    SwitchI(ConstRef<SwitchI>) = delete;
+    SwitchI& operator=(ConstRef<SwitchI>) = delete;
+
+    ConstRef<string> name() const{return n_;};
+    virtual bool state() const{return false;}
+
+    static SwitchI const*  find(ConstRef<string> name){
+        auto sw_it = switches.find(name);
+        if(sw_it == switches.cend()){
+            return nullptr;
+        }
+        else{
+            return sw_it->second;
+        }
     }
+
+protected:
+    SwitchI() = default; //for child usage
+    void regist(){
+        if(n_.empty()){
+            cout << __func__ << " empty\n";
+            return;
+        } 
+        if(switches.count(n_)) {
+            cout << __func__ << " " << n_ << " already exists\n";
+            return;
+        } 
+        switches.emplace(n_, this);
+        registered = true;
+    }
+    void swap(SwitchI & p){
+        n_.swap(p.n_);
+        std::swap(registered, p.registered);
+        if(registered){
+            switches[n_] = this;
+        }
+    }
+    static unordered_map<string, SwitchI*> switches; 
     bool registered = false;
+    string n_ = ""s;
+
+};
+ 
+
+struct Switch : public SwitchI{
+    explicit Switch(string name, bool state = false) : SwitchI(name), state_(state){
+    }
+    //try default implementations V
+    Switch(Switch && p){
+        swap(p);
+    }
+    Switch& operator=(Switch&& p){
+        if(this != std::addressof(p)){
+            swap(p);
+        }
+        return *this;
+    }
+
+    // Switch(ConstRef<Switch>) = delete;
+    // Switch& operator=(ConstRef<Switch>) = delete;
+
+    virtual bool state() const override{return state_;}
+    void set(bool state){
+        cout << __func__ << " " << name() << ": " << 
+            std::boolalpha << state_ << "->" << state << endl;
+        state_ = state;
+    }
+private:
+    void swap(Switch &p){
+        SwitchI::swap(p);
+        std::swap(state_,p.state_);
+    }
+    bool state_ = false;
 };
 
-//! for VirtSwitch|API|GPIO inheritance - meybe agregation is better
-struct SwitchI{
-    string name() const;
-    bool state() const;
-    void notify(){
-        SwitchMgr::instance().notify(Signal{.name = name(), .new_state = state()});
-    }    
+
+struct SwitchILess{
+    using is_transparent = std::true_type;
+    bool operator()(ConstRef<Switch> l, ConstRef<Switch> r) const{
+        return l.name() <  r.name();
+    }
+    bool operator()(const Switch& a, const std::string& b) const {
+        return a.name()< b;
+    }
+    
+    bool operator()(const std::string& a, const Switch& b) const {
+        return a < b.name();
+    }
 };
+
+struct SwitchList {
+    SwitchList() = default;
+    SwitchList(SwitchList &&) = delete;
+    SwitchList(ConstRef<SwitchList>) = delete;
+    SwitchList & operator=(SwitchList &&) = delete;
+    SwitchList & operator=(ConstRef<SwitchList>) = delete;
+
+
+    set<Switch, SwitchILess> list;
+    static SwitchList& ins(){
+        static SwitchList _;
+        return _;
+    }
+
+    void add(ConstRef<json> j){
+        string name = j.at("name");
+        bool ena = j.at("enabled");
+        if(name.empty()) throw logic_error("empty name");
+        list.emplace(name, ena);
+    }
+    void del(ConstRef<string> name){
+        auto it = list.find(name);
+        if(it != list.cend()) list.erase(it);
+    }
+    void change(ConstRef<json> j){
+        string name = j.at("name");
+        bool ena = j.at("enabled");
+        if(name.empty()) throw logic_error("empty name");
+
+        auto it = list.find(name);
+        if(it != list.cend()){
+            auto node = list.extract(it);
+            node.value().set(ena);
+            list.insert(std::move(node));
+        }
+    }
+    json getAll() const{
+        json j;
+        for(ConstRef<Switch> sw : list){
+            j[sw.name()] = sw.state();
+        }
+        return j;
+
+    }
+};
+
+class Switcher : public RuleI{
+private:
+    // atomic<bool> active = {false};
+    string name = ""s; // == SwitchI name\identifier
+public:
+    json toJson()const noexcept override{
+        return json{
+            // {"enabled", active.load()},
+            {"name", name}, //source
+            {"type", RuleType::Switcher}
+        };
+    }
+    void fromJson(ConstRef<json> j) noexcept(false) override{
+        // active = j.at("enabled");
+        name = j.at("name");
+        if(name.empty()) throw logic_error("invalid source");
+        else{
+            if(SwitchI::find(name) == nullptr){
+                cout << "invalid source - no switch!\n";
+                throw logic_error("invalid source");//?
+            }
+        }
+    }
+    //need tristate - true/false/error
+    bool isActive()const override{
+        auto sw_ptr = SwitchI::find(name);
+        if(sw_ptr){
+            return sw_ptr->state();
+        }
+        return true; // for temporary - no switch no rules
+    }
+};
+
+// struct Signal{
+//     std::string name;
+//     bool new_state = false; //on = true, off = false
+// };
+
+// struct SwitchMgr{
+//     unordered_map<string, shared_ptr<Switcher>> switchers; //may live on weak_ptr
+//     static SwitchMgr& instance();
+//     //! call when rule added
+//     bool registerSwitch(string source, shared_ptr<Switcher> sw);
+//     //! call when 
+//     void unregister(ConstRef<string> n);
+//     void notify(ConstRef<Signal> signal);
+//     void printSws(){
+//         cout << "switchers: \n";
+//         for(const auto &x : switchers){
+//             cout << x.first << endl;
+//         }
+//     }
+
+//     private:
+//     SwitchMgr() = default;
+// };
+
+
+// struct SwitchPolicy : public Policy{
+//     string signal;
+//     virtual ~SwitchPolicy(){
+//         if(!signal.empty() && registered){
+//             // cout << __func__ << endl;
+//             SwitchMgr::instance().unregister(signal);
+//         }
+//     }
+//     virtual string type() const override {return "switch_policy";}
+//     json toJson() const override{
+//         auto j = Policy::toJson();
+//         j["signal"] = signal;
+//         return j;
+//     }
+
+//     void registerToMgr(){
+//         registered = SwitchMgr::instance().registerSwitch(signal, dynamic_pointer_cast<Switcher>(rule));
+//     }
+//     SwitchPolicy() = default;//{cout << __func__ << endl;}
+//     SwitchPolicy(SwitchPolicy&& r){
+//         this->swap(r);
+//     };
+//     SwitchPolicy& operator =(SwitchPolicy && p){
+//         if(this != &p){
+//             this->swap(p);
+//         }
+//         return *this;
+//     }
+
+//     SwitchPolicy(const SwitchPolicy&) = delete;
+//     SwitchPolicy& operator =(ConstRef<SwitchPolicy>) = delete;
+    
+// private:
+//     void swap(SwitchPolicy& r){
+//         signal.swap(r.signal);
+//         std::swap(registered, r.registered);
+//         // from parent policy
+//         rule.swap(r.rule);
+//         targets.swap(r.targets);
+//     }
+//     bool registered = false;
+// };
+
+
 

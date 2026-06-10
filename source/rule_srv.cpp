@@ -69,14 +69,26 @@ void RuleServer::handle_mods(const httplib::Request& req, httplib::Response& res
     }
 }
 
-void RuleServer::handle_signal(const httplib::Request& req, httplib::Response& res) noexcept{
+void RuleServer::handle_switch(const httplib::Request& req, httplib::Response& res) noexcept{
     try{
-        const auto j = json::parse(req.body);
-        Signal s{
-            .name = j.at("signal"),
-            .new_state = j.at("state")
-        };
-        SwitchMgr::instance().notify(s);
+        if(req.method == "GET"){
+            res.set_content(SwitchList::ins().getAll().dump(), json_content);
+        }
+        else if(req.method == "POST"){
+            SwitchList::ins().add(json::parse(req.body));
+        }
+        else if(req.method == "DELETE"){
+            SwitchList::ins().del(req.get_param_value("name"));
+        }
+        else if(req.method == "PATCH"){
+            SwitchList::ins().change(json::parse(req.body));
+        }
+        
+        // Signal s{
+        //     .name = j.at("signal"),
+        //     .new_state = j.at("state")
+        // };
+        // SwitchMgr::instance().notify(s);
     }
     catch(ConstRef<exception> ex){
         cout << __func__ << ": " << ex.what() << endl;
