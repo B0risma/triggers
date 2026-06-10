@@ -1,5 +1,6 @@
 #include "rule_srv.h"
 #include "trigger_cfg.h"
+#include "virt_switch.hpp"
 
 list<Module> RuleServer::mods = {}; 
 constexpr auto json_content = "text/json"s;
@@ -18,7 +19,7 @@ void RuleServer::handle_rules(const httplib::Request& req, httplib::Response& re
         else if(req.method == "PATCH"){
             ConstRef<string> name = req.get_param_value("name");
             auto j = json::parse(req.body);
-            rules()->addPolicy(name, policyFromJson(j));
+            rules()->addPolicy(name, Policy::fromJson(j));
         }
         else if(req.method == "DELETE"){
             ConstRef<string> name = req.get_param_value("name");
