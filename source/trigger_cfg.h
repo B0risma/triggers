@@ -219,31 +219,65 @@ struct Signal{
 
 struct SwitchMgr{
     unordered_map<string, shared_ptr<Switcher>> switchers; //may live on weak_ptr
-    static SwitchMgr instance();
+    static SwitchMgr& instance();
     //! call when rule added
-    void registerSwitch(string source, shared_ptr<Switcher> sw);
+    bool registerSwitch(string source, shared_ptr<Switcher> sw);
     //! call when 
     void unregister(ConstRef<string> n);
     void notify(ConstRef<Signal> signal);
-    // void garbageCollector(){
-    //     for(auto it = switchers.begin(); it != switchers.end();){
-    //         if(!it->lock())
-    //             it = switchers.erase(it);
-    //         else ++it;
-    //     }
-    // }
+    void printSws(){
+        cout << "switchers: \n";
+        for(const auto &x : switchers){
+            cout << x.first << endl;
+        }
+    }
+
+    private:
+    SwitchMgr() = default;
 };
 
 
 struct SwitchPolicy : public Policy{
     string signal;
-    virtual ~SwitchPolicy(){SwitchMgr::instance().unregister(signal);}
+    virtual ~SwitchPolicy(){
+        if(!signal.empty() && registered){
+            // cout << __func__ << endl;
+            SwitchMgr::instance().unregister(signal);
+        }
+    }
     virtual string type() const override {return "switch_policy";}
     json toJson() const override{
         auto j = Policy::toJson();
         j["signal"] = signal;
         return j;
     }
+
+    void registerToMgr(){
+        registered = SwitchMgr::instance().registerSwitch(signal, dynamic_pointer_cast<Switcher>(rule));
+    }
+    SwitchPolicy() = default;//{cout << __func__ << endl;}
+    SwitchPolicy(SwitchPolicy&& r){
+        this->swap(r);
+    };
+    SwitchPolicy& operator =(SwitchPolicy && p){
+        if(this != &p){
+            this->swap(p);
+        }
+        return *this;
+    }
+
+    SwitchPolicy(const SwitchPolicy&) = delete;
+    SwitchPolicy& operator =(ConstRef<SwitchPolicy>) = delete;
+    
+private:
+    void swap(SwitchPolicy& r){
+        signal.swap(r.signal);
+        std::swap(registered, r.registered);
+        // from parent policy
+        rule.swap(r.rule);
+        targets.swap(r.targets);
+    }
+    bool registered = false;
 };
 
 //! for VirtSwitch|API|GPIO inheritance - meybe agregation is better

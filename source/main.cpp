@@ -36,6 +36,8 @@ int main(){
 
         srv.Get(RuleServer::mods_URI, RuleServer::handle_mods);
         srv.Post(RuleServer::mods_URI, RuleServer::handle_mods);
+
+        srv.Post(RuleServer::signal_URI, RuleServer::handle_signal);
     }
     srv.listen(addr, port);
     // test();

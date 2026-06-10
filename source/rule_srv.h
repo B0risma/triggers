@@ -11,8 +11,12 @@ struct RuleServer {
     static shared_ptr<RuleList> rules();
     static list<Module> mods;  
     static void handle_rules(const httplib::Request& req, httplib::Response& res) noexcept;
-    static void handle_mods(const httplib::Request& req, httplib::Response& res) noexcept;
     static constexpr auto rule_URI = "/rule"s;
+
+    static void handle_mods(const httplib::Request& req, httplib::Response& res) noexcept;
     static constexpr auto mods_URI = "/mods"s;
+
+    static void handle_signal(const httplib::Request& req, httplib::Response& res) noexcept;
+    static constexpr auto signal_URI = "/signal"s;
     static void testInit();
 };

@@ -1,4 +1,5 @@
 #include "rule_srv.h"
+#include "trigger_cfg.h"
 
 list<Module> RuleServer::mods = {}; 
 constexpr auto json_content = "text/json"s;
@@ -62,6 +63,20 @@ void RuleServer::handle_mods(const httplib::Request& req, httplib::Response& res
                 mods.emplace_back(std::move(m));
             }
         }
+    }
+    catch(ConstRef<exception> ex){
+        cout << __func__ << ": " << ex.what() << endl;
+    }
+}
+
+void RuleServer::handle_signal(const httplib::Request& req, httplib::Response& res) noexcept{
+    try{
+        const auto j = json::parse(req.body);
+        Signal s{
+            .name = j.at("signal"),
+            .new_state = j.at("state")
+        };
+        SwitchMgr::instance().notify(s);
     }
     catch(ConstRef<exception> ex){
         cout << __func__ << ": " << ex.what() << endl;
