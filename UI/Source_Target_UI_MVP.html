@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction System Designer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3b 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00adb5;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 173, 181, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00adb5;
+            border-bottom: 2px solid #00adb5;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            background: #1e1e2e;
+            border: 1px solid #3a3a4b;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #00adb5;
+        }
+
+        .settings-card {
+            background: #252535;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .module-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .module-chip {
+            background: #2a2a3b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #3a3a4b;
+            font-size: 14px;
+        }
+
+        .module-chip.selected {
+            background: #00adb5;
+            border-color: #00adb5;
+        }
+
+        .save-section {
+            margin: 30px auto;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .rule-name-input {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 173, 181, 0.2);
+        }
+
+        .rule-name-input input {
+            font-size: 16px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #00adb5 0%, #008c94 100%);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+            letter-spacing: 1px;
+            min-width: 250px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 173, 181, 0.4);
+            background: linear-gradient(135deg, #00c5cf 0%, #00a0a8 100%);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .reactions-list {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .reaction-item {
+            background: #252535;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reaction-info {
+            flex: 1;
+        }
+
+        .reaction-title {
+            font-weight: bold;
+            color: #00adb5;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .reaction-desc {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff3838;
+            transform: scale(1.05);
+        }
+
+        .warning {
+            background: rgba(255, 71, 87, 0.2);
+            border-left: 3px solid #ff4757;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        hr {
+            border-color: #3a3a4b;
+            margin: 20px 0;
+        }
+
+        .mode-selector {
+            margin-bottom: 20px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-panel {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .save-btn {
+                padding: 14px 32px;
+                font-size: 16px;
+                min-width: 200px;
+            }
+            
+            .rule-name-input {
+                margin: 0 20px 20px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> Reaction System Designer</h1>
+        
+        <div class="main-panel">
+            <!-- Source Panel -->
+            <div class="panel">
+                <div class="panel-title"> Source Menu</div>
+                
+                <div class="form-group">
+                    <label>Source Type</label>
+                    <select id="source-type-select">
+                        <option value="schedule">Schedule</option>
+                        <option value="vswitch">VirtSwitch</option>
+                        <option value="gpio">GPIO</option>
+                        <option value="singleshot">SingleShot</option>
+                    </select>
+                </div>
+
+                <div id="source-settings">
+                    <!-- Schedule settings -->
+                    <div id="schedule-settings" class="settings-card">
+                        <div class="form-group">
+                            <label>Schedule Mode</label>
+                            <select id="schedule-mode">
+                                <option>at_clock</option>
+                                <option>daily</option>
+                                <option>weekly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>When ON</label>
+                            <input type="time" id="schedule-on" value="17:00">
+                        </div>
+                        <div class="form-group">
+                            <label>When OFF</label>
+                            <input type="time" id="schedule-off" value="22:00">
+                        </div>
+                    </div>
+
+                    <!-- Switch settings -->
+                    <div id="switch-settings" class="settings-card" style="display: none;">
+                        <div class="form-group">
+                            <label>Switch</label>
+                            <select id="switch-pin">
+                                <option>IN_1</option>
+                                <option>IN_2</option>
+                                <option>IN_3</option>
+                                <option>VIRT_1</option>
+                                <option>VIRT_2</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SingleShot settings -->
+                    <div id="singleshot-settings" class="settings-card" style="display: none;">
+                        <div class="warning">
+                            ⚠️ SingleShot mode: Triggers once, then auto-disables. 
+                            Target will be restricted to single-shot compatible actions.
+                        </div>
+                        <div class="form-group">
+                            <label>Source Pin</label>
+                            <select id="singleshot-pin">
+                                <option>GPIO_IN</option>
+                                <option>GPIO_IN_2</option>
+                                <option>BUTTON_1</option>
+                                <option>VIRT_TRIG</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Panel -->
+            <div class="panel">
+                <div class="panel-title"> Target Menu</div>
+                <!-- HIDED because selected from at Source menu -->
+                <!-- <div class="form-group mode-selector">
+                            <label>Input Mode</label>
+                            <select id="cv-input-mode">
+                                <option value="switch">Switch State (On/Off)</option>
+                                <option value="singleshot">SingleShot (One Pulse)</option>
+                            </select>
+                </div> -->
+
+
+                <div class="form-group">
+                    <label>Target Type</label>
+                    <select id="target-type-select">
+                        <option value="cv">CV Control</option>
+                        <option value="video">Video Preset</option>
+                        <option value="audio">Audio Alarm</option>
+                    </select>
+                </div>
+
+                <div id="target-settings">
+                    <!-- CV settings -->
+                    <div id="cv-settings" class="settings-card">
+                        <!-- Input Mode at top -->
+                        <!-- <div class="form-group mode-selector">
+                            <label>Input Mode</label>
+                            <select id="cv-input-mode">
+                                <option value="switch">Switch State (On/Off)</option>
+                                <option value="singleshot">SingleShot (One Pulse)</option>
+                            </select>
+                        </div> -->
+                        
+                        <!-- Action combo-box for CV -->
+                        <div class="form-group">
+                            <label>Action</label>
+                            <select id="cv-action">
+                                <option value="on_off_module">On/Off Module</option>
+                                <option value="switch_all">Switch All</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Mode: Module Activity (on/off)</label>
+                            <div class="module-list" id="module-list">
+                                <div class="module-chip selected" data-module="fire">🔥 Fire</div>
+                                <div class="module-chip" data-module="smoke">💨 Smoke</div>
+                                <div class="module-chip" data-module="haze">🌫️ Haze</div>
+                                <div class="module-chip" data-module="co2">💨 CO2</div>
+                                <div class="module-chip" data-module="fan">🌀 Fan</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video settings -->
+                    <div id="video-settings" class="settings-card" style="display: none;">
+                        <!-- Input Mode at top -->
+                        <!-- <div class="form-group mode-selector">
+                            <label>Input Mode</label>
+                            <select id="video-input-mode">
+                                <option value="switch">Switch State (On/Off)</option>
+                                <option value="singleshot">SingleShot (One Pulse)</option>
+                            </select>
+                        </div> -->
+                        
+                        <!-- Action combo-box for Video -->
+                        <div class="form-group">
+                            <label>Action</label>
+                            <select id="video-action">
+                                <option value="preset">Preset</option>
+                                <option value="day_night">Day/Night</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Mode: Switch Preset</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Preset (On)</label>
+                            <select id="preset-on">
+                                <option>Preset 1 - Main Show</option>
+                                <option>Preset 2 - Camera 1</option>
+                                <option>Preset 3 - Camera 2</option>
+                                <option>Preset 4 - Blackout</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Preset (Off)</label>
+                            <select id="preset-off">
+                                <option>Preset 5 - Logo</option>
+                                <option>Preset 6 - Blackout</option>
+                                <option>Preset 2 - Camera 1</option>
+                                <option>Preset 4 - Blackout</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Audio settings -->
+                    <div id="audio-settings" class="settings-card" style="display: none;">
+                        <!-- Input Mode at top -->
+                        <!-- <div class="form-group mode-selector">
+                            <label>Input Mode</label>
+                            <select id="audio-input-mode">
+                                <option value="switch">Switch State (On/Off)</option>
+                                <option value="singleshot">SingleShot (One Pulse)</option>
+                            </select>
+                        </div> -->
+                        
+                        <div class="warning">
+                            🔔 SingleShot Mode: Alarm will sound for 5 seconds on trigger
+                        </div>
+                        <div class="form-group">
+                            <label>Target: Audio Alarm</label>
+                            <select id="audio-alarm-type">
+                                <option>Emergency Siren</option>
+                                <option>Warning Beep</option>
+                                <option>Alert Tone</option>
+                                <option>Custom Sound</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Section with Rule Name and Centered Button -->
+        <div class="save-section">
+            <div class="rule-name-input">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>📝 Rule Name</label>
+                    <input type="text" id="rule-name" placeholder="Enter a name for this reaction rule..." value="My Reaction Rule">
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveReaction()">💾 SAVE REACTION RULE</button>
+        </div>
+
+        <!-- Saved Reactions -->
+        <div class="reactions-list">
+            <div class="panel-title">📋 Saved Reactions</div>
+            <div id="reactions-container">
+                <div class="reaction-item">
+                    <div class="reaction-info">
+                        <div class="reaction-title">Daily Show Operation</div>
+                        <div class="reaction-desc">Schedule → CV Control (Action: On/Off Module, Fire, Smoke) | ON at 5PM, OFF at 10PM | Switch State Mode</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReaction(this)">Delete</button>
+                </div>
+                <div class="reaction-item">
+                    <div class="reaction-info">
+                        <div class="reaction-title">Emergency Stop</div>
+                        <div class="reaction-desc">VirtSwitch (IN_1) → Audio Alarm | Switch State Mode</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReaction(this)">Delete</button>
+                </div>
+                <div class="reaction-item">
+                    <div class="reaction-info">
+                        <div class="reaction-title">Door Trigger</div>
+                        <div class="reaction-desc">SingleShot (GPIO_IN) → Video Preset (Action: Preset) | SingleShot Mode</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReaction(this)">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentSourceType = 'schedule';
+        let currentTargetType = 'cv';
+
+        // DOM elements
+        const sourceTypeSelect = document.getElementById('source-type-select');
+        const targetTypeSelect = document.getElementById('target-type-select');
+        const ruleNameInput = document.getElementById('rule-name');
+
+        // Source type switching
+        sourceTypeSelect.addEventListener('change', (e) => {
+            currentSourceType = e.target.value;
+            
+            // Hide all settings
+            document.getElementById('schedule-settings').style.display = 'none';
+            document.getElementById('switch-settings').style.display = 'none';
+            document.getElementById('singleshot-settings').style.display = 'none';
+            
+            // Show selected settings
+            if (currentSourceType === 'schedule') {
+                document.getElementById('schedule-settings').style.display = 'block';
+            } else if (currentSourceType === 'vswitch' || currentSourceType === 'gpio') {
+                document.getElementById('switch-settings').style.display = 'block';
+                // Update label text based on type
+                const switchLabel = document.querySelector('#switch-settings label');
+                if (currentSourceType === 'vswitch') {
+                    switchLabel.textContent = 'Virtual Switch';
+                } else {
+                    switchLabel.textContent = 'GPIO Pin';
+                }
+            } else if (currentSourceType === 'singleshot') {
+                document.getElementById('singleshot-settings').style.display = 'block';
+            }
+        });
+
+        // Target type switching
+        targetTypeSelect.addEventListener('change', (e) => {
+            currentTargetType = e.target.value;
+            
+            // Hide all settings
+            document.getElementById('cv-settings').style.display = 'none';
+            document.getElementById('video-settings').style.display = 'none';
+            document.getElementById('audio-settings').style.display = 'none';
+            
+            // Show selected settings
+            if (currentTargetType === 'cv') {
+                document.getElementById('cv-settings').style.display = 'block';
+            } else if (currentTargetType === 'video') {
+                document.getElementById('video-settings').style.display = 'block';
+            } else if (currentTargetType === 'audio') {
+                document.getElementById('audio-settings').style.display = 'block';
+            }
+        });
+
+        // Module selection
+        document.querySelectorAll('.module-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('selected');
+            });
+        });
+
+        // Get current source config
+        function getSourceConfig() {
+            const sourceConfig = { type: currentSourceType };
+            
+            if (currentSourceType === 'schedule') {
+                const scheduleMode = document.getElementById('schedule-mode').value;
+                const onTime = document.getElementById('schedule-on').value;
+                const offTime = document.getElementById('schedule-off').value;
+                sourceConfig.config = { mode: scheduleMode, on_time: onTime, off_time: offTime };
+                sourceConfig.description = `Schedule: ${scheduleMode}, ON at ${onTime}, OFF at ${offTime}`;
+            } 
+            else if (currentSourceType === 'vswitch' || currentSourceType === 'gpio') {
+                const switchPin = document.getElementById('switch-pin').value;
+                sourceConfig.config = { pin: switchPin, type: currentSourceType };
+                sourceConfig.description = `${currentSourceType === 'vswitch' ? 'Virtual Switch' : 'GPIO'}: ${switchPin}`;
+            }
+            else if (currentSourceType === 'singleshot') {
+                const sourcePin = document.getElementById('singleshot-pin').value;
+                sourceConfig.config = { source_pin: sourcePin };
+                sourceConfig.description = `SingleShot: ${sourcePin}`;
+            }
+            
+            return sourceConfig;
+        }
+
+        // Get current target config
+        function getTargetConfig() {
+            let targetConfig = { type: currentTargetType };
+            
+            if (currentTargetType === 'cv') {
+                const inputMode = document.getElementById('cv-input-mode').value;
+                const action = document.getElementById('cv-action').value;
+                const selectedModules = Array.from(document.querySelectorAll('.module-chip.selected'))
+                    .map(chip => chip.dataset.module);
+                
+                targetConfig = {
+                    type: currentTargetType,
+                    inputMode: inputMode,
+                    action: action,
+                    config: { modules: selectedModules }
+                };
+                
+                let actionText = action === 'on_off_module' ? 'On/Off Module' : 'Switch All';
+                targetConfig.description = `CV Control (Action: ${actionText}, ${selectedModules.join(', ') || 'none'}) | Mode: ${inputMode === 'switch' ? 'Switch State' : 'SingleShot'}`;
+            }
+            else if (currentTargetType === 'video') {
+                const inputMode = document.getElementById('video-input-mode').value;
+                const action = document.getElementById('video-action').value;
+                const presetOn = document.getElementById('preset-on').value;
+                const presetOff = document.getElementById('preset-off').value;
+                
+                targetConfig = {
+                    type: currentTargetType,
+                    inputMode: inputMode,
+                    action: action,
+                    config: { preset_on: presetOn, preset_off: presetOff }
+                };
+                
+                let actionText = action === 'preset' ? 'Preset' : 'Day/Night';
+                targetConfig.description = `Video Preset (Action: ${actionText}, ON→${presetOn}, OFF→${presetOff}) | Mode: ${inputMode === 'switch' ? 'Switch State' : 'SingleShot'}`;
+            }
+            else if (currentTargetType === 'audio') {
+                const inputMode = document.getElementById('audio-input-mode').value;
+                const alarmType = document.getElementById('audio-alarm-type').value;
+                
+                targetConfig = {
+                    type: currentTargetType,
+                    inputMode: inputMode,
+                    config: { alarm: alarmType }
+                };
+                
+                targetConfig.description = `Audio Alarm: ${alarmType} | Mode: ${inputMode === 'switch' ? 'Switch State' : 'SingleShot'}`;
+            }
+            
+            return targetConfig;
+        }
+
+        // Save reaction
+        function saveReaction() {
+            const source = getSourceConfig();
+            const target = getTargetConfig();
+            const ruleName = ruleNameInput.value.trim();
+            
+            // Validation checks
+            if (!ruleName) {
+                showNotification('❌ Please enter a rule name!', '#ff4757', 2000);
+                ruleNameInput.focus();
+                return;
+            }
+            
+            if (currentTargetType === 'cv' && target.config.modules.length === 0) {
+                showNotification('❌ Please select at least one module for CV Control', '#ff4757', 2000);
+                return;
+            }
+            
+            // Validation for SingleShot compatibility
+            const isSingleShotMode = (currentTargetType === 'cv' && target.inputMode === 'singleshot') ||
+                                     (currentTargetType === 'video' && target.inputMode === 'singleshot') ||
+                                     (currentTargetType === 'audio' && target.inputMode === 'singleshot');
+            
+            if (isSingleShotMode && currentSourceType !== 'singleshot') {
+                const confirmSave = confirm('Warning: SingleShot input mode with non-SingleShot source may behave unexpectedly. Continue?');
+                if (!confirmSave) return;
+            }
+            
+            const reactionHtml = `
+                <div class="reaction-item">
+                    <div class="reaction-info">
+                        <div class="reaction-title">${escapeHtml(ruleName)}</div>
+                        <div class="reaction-desc">${escapeHtml(source.description)} → ${escapeHtml(target.description)}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReaction(this)">Delete</button>
+                </div>
+            `;
+            
+            document.getElementById('reactions-container').insertAdjacentHTML('afterbegin', reactionHtml);
+            
+            // Show success message
+            showNotification('✓ Reaction "' + ruleName + '" saved successfully!', '#00adb5', 2000);
+        }
+        
+        // Delete reaction
+        function deleteReaction(btn) {
+            const reactionItem = btn.closest('.reaction-item');
+            const title = reactionItem.querySelector('.reaction-title').textContent;
+            if (confirm(`Delete reaction "${title}"?`)) {
+                reactionItem.remove();
+                showNotification(`✓ Reaction "${title}" deleted`, '#ff4757', 2000);
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, color, duration = 2000) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${color};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out ${duration - 500}ms forwards;
+                z-index: 1000;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), duration);
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                    visibility: hidden;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize - trigger change events to set initial state
+        sourceTypeSelect.dispatchEvent(new Event('change'));
+        targetTypeSelect.dispatchEvent(new Event('change'));
+        
+        // Set default rule name
+        ruleNameInput.value = 'My Reaction Rule';
+        
+        console.log('Reaction Designer Ready - Added Action combo boxes for CV and Video targets');
+    </script>
+</body>
+</html>
