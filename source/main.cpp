@@ -19,29 +19,46 @@ void test_handler(const httplib::Request& req, httplib::Response& res){
     res.set_content(ret.dump(), "text/json");
 }
 
-void test();
+// rule map based
+// atomic<bool> started = true;
+// int main(){
+//     httplib::Server srv;
+//     srv.Get("/test"s, test_handler);
+//     constexpr auto port = 8080;
+//     constexpr auto addr = "localhost";
+//     cout << "Server listen on http://" << addr << ":" << port << endl;
+//     {
+//         RuleServer::testInit();
+//         srv.Get(RuleServer::rule_URI, RuleServer::handle_rules);
+//         srv.Post(RuleServer::rule_URI, RuleServer::handle_rules);
+//         srv.Patch(RuleServer::rule_URI, RuleServer::handle_rules);
 
-atomic<bool> started = true;
+//         srv.Get(RuleServer::mods_URI, RuleServer::handle_mods);
+//         srv.Post(RuleServer::mods_URI, RuleServer::handle_mods);
+
+//         srv.Get(RuleServer::switch_URI, RuleServer::handle_switch);
+//         srv.Post(RuleServer::switch_URI, RuleServer::handle_switch);
+//         srv.Delete(RuleServer::switch_URI, RuleServer::handle_switch);
+//         srv.Patch(RuleServer::switch_URI, RuleServer::handle_switch);
+//     }
+//     srv.listen(addr, port);
+//     // test();
+// }
+
+
+//event based - V2
+#include "v2.h"
 int main(){
-    httplib::Server srv;
-    srv.Get("/test"s, test_handler);
-    constexpr auto port = 8080;
-    constexpr auto addr = "localhost";
-    cout << "Server listen on http://" << addr << ":" << port << endl;
-    {
-        RuleServer::testInit();
-        srv.Get(RuleServer::rule_URI, RuleServer::handle_rules);
-        srv.Post(RuleServer::rule_URI, RuleServer::handle_rules);
-        srv.Patch(RuleServer::rule_URI, RuleServer::handle_rules);
 
-        srv.Get(RuleServer::mods_URI, RuleServer::handle_mods);
-        srv.Post(RuleServer::mods_URI, RuleServer::handle_mods);
+    auto q = make_shared<EventQueue>();
+    
+    Toggle trig{};
+    trig.setEventQueue(q);
 
-        srv.Get(RuleServer::switch_URI, RuleServer::handle_switch);
-        srv.Post(RuleServer::switch_URI, RuleServer::handle_switch);
-        srv.Delete(RuleServer::switch_URI, RuleServer::handle_switch);
-        srv.Patch(RuleServer::switch_URI, RuleServer::handle_switch);
-    }
-    srv.listen(addr, port);
-    // test();
+    cv_ctrl targ{};
+    targ.setEventQueue(q);
+
+    trig.emitEvent();
+
+
 }
