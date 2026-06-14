@@ -1,0 +1,258 @@
+GET    /api/triggers              # List all triggers
+POST   /api/triggers              # Create new trigger
+GET    /api/triggers/{id}         # Get trigger details
+PUT    /api/triggers/{id}         # Update trigger
+DELETE /api/triggers/{id}         # Delete trigger
+
+GET    /api/targets               # List all targets
+POST   /api/targets               # Create new target
+GET    /api/targets/{id}          # Get target details
+PUT    /api/targets/{id}          # Update target
+DELETE /api/targets/{id}          # Delete target
+
+GET    /api/reactions             # List all reaction rules
+POST   /api/reactions             # Create reaction (bind trigger+target)
+PUT    /api/reactions/{id}        # Update reaction
+DELETE /api/reactions/{id}        # Delete reaction
+
+POST   /api/system/trigger/{id}   # Manual trigger (testing)
+GET    /api/system/status         # Get current system status
+
+Trigger (Source)
+// Schedule Trigger
+{
+  "id": "trg_001",
+  "type": "schedule",
+  "name": "Daily Show Operation",
+  "enabled": true,
+  "config": {
+    "on_time": "17:00:00",
+    "off_time": "22:00:00",
+    "timezone": "America/New_York",
+    "days_of_week": [1,2,3,4,5,6,7],  // 1=Monday, 7=Sunday
+    "start_date": "2026-01-01",
+    "end_date": null
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z",
+    "created_by": "admin"
+  }
+}
+
+// Switch Trigger (Virtual or GPIO)
+{
+  "id": "trg_002",
+  "type": "switch",
+  "name": "Emergency Stop Button",
+  "enabled": true,
+  "config": {
+    "input_type": "gpio",  // "gpio" or "virtual"
+    "pin": "GPIO_17",
+    "pull": "up",          // "up", "down", "none"
+    "debounce_ms": 50,
+    "active_state": "low"  // "high" or "low"
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z",
+    "created_by": "admin"
+  }
+}
+
+// SingleShot Trigger
+{
+  "id": "trg_003",
+  "type": "singleshot",
+  "name": "Door Open Alert",
+  "enabled": true,
+  "config": {
+    "source_pin": "GPIO_23",
+    "trigger_on": "rising_edge",  // "rising_edge", "falling_edge", "both"
+    "debounce_ms": 100,
+    "auto_disable_after_ms": 5000,  // Auto re-arm after 5 seconds
+    "max_triggers_per_minute": 10
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z",
+    "created_by": "admin"
+  }
+}
+
+// HTTP Webhook Trigger (bonus)
+{
+  "id": "trg_004",
+  "type": "webhook",
+  "name": "Remote API Trigger",
+  "enabled": true,
+  "config": {
+    "endpoint": "/webhook/trigger/004",
+    "method": "POST",
+    "auth_type": "bearer",
+    "auth_token": "sk_live_xxx",
+    "allowed_ips": ["192.168.1.0/24"]
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z",
+    "created_by": "admin"
+  }
+}
+
+
+Target
+// CV Control Target
+{
+  "id": "tgt_001",
+  "type": "cv",
+  "name": "Smoke Machine Control",
+  "config": {
+    "modules": [
+      {
+        "name": "fire",
+        "channel": 1,
+        "active_on_signal": true,
+        "fade_ms": 0
+      },
+      {
+        "name": "smoke",
+        "channel": 2,
+        "active_on_signal": true,
+        "fade_ms": 500
+      },
+      {
+        "name": "haze",
+        "channel": 3,
+        "active_on_signal": false,
+        "fade_ms": 0
+      }
+    ],
+    "bus_type": "dmx",  // "dmx", "artnet", "gpio", "midi"
+    "universe": 0,
+    "refresh_rate_hz": 30
+  },
+  "constraints": {
+    "requires_ack": false,
+    "max_rate_per_second": 10
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z"
+  }
+}
+
+// Video Preset Target
+{
+  "id": "tgt_002",
+  "type": "video",
+  "name": "Main Screen Presets",
+  "config": {
+    "presets": {
+      "on": {
+        "id": "preset_101",
+        "name": "Main Show",
+        "type": "program",
+        "parameters": {
+          "input": "HDMI_1",
+          "transition": "cut",
+          "transition_ms": 0
+        }
+      },
+      "off": {
+        "id": "preset_102",
+        "name": "Blackout",
+        "type": "blackout",
+        "parameters": {}
+      }
+    },
+    "output": "HDMI_OUT_1",
+    "mixer_type": "atem"  // "atem", "obs", "vmix", "custom"
+  },
+  "constraints": {
+    "requires_ack": true,
+    "transition_time_ms": 0
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z"
+  }
+}
+
+// Audio Alarm Target
+{
+  "id": "tgt_003",
+  "type": "audio_alarm",
+  "name": "Emergency Siren",
+  "config": {
+    "audio_file": "/sounds/emergency.wav",
+    "volume": 0.85,
+    "playback_mode": "singleshot",  // "singleshot", "loop_while_active"
+    "min_interval_ms": 10000,
+    "max_duration_ms": 30000,
+    "output_device": "analog_out_1"
+  },
+  "constraints": {
+    "requires_ack": true,
+    "cooldown_seconds": 5
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z"
+  }
+}
+
+// MIDI Control Target
+{
+  "id": "tgt_004",
+  "type": "midi",
+  "name": "Lighting Console",
+  "config": {
+    "on_message": {
+      "type": "note_on",
+      "channel": 1,
+      "note": 60,
+      "velocity": 127
+    },
+    "off_message": {
+      "type": "note_off",
+      "channel": 1,
+      "note": 60,
+      "velocity": 0
+    },
+    "device": "MIDI_OUT_1"
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z"
+  }
+}
+
+RUle = Trigger + source
+{
+  "id": "react_001",
+  "name": "Daily Show Automation",
+  "enabled": true,
+  "trigger_id": "trg_001",
+  "target_id": "tgt_001",
+  "mode": "toggle",  // "toggle", "oneshot", "pulse", "hold"
+  "config": {
+    "delay_on_ms": 0,
+    "delay_off_ms": 0,
+    "min_on_time_ms": 0,
+    "max_on_time_ms": null,
+    "retry_count": 3,
+    "retry_delay_ms": 1000
+  },
+  "schedule_override": {
+    "enabled": false,
+    "start_time": null,
+    "end_time": null
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:30:00Z",
+    "updated_at": "2026-01-15T10:30:00Z",
+    "trigger_count": 42,
+    "last_triggered_at": "2026-01-15T22:00:00Z"
+  }
+}

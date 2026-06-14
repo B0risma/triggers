@@ -62,3 +62,57 @@ Target Menu:
      Target: Audio Alarm
     --------------------------
 
+
+
+-----------------------------
+Better - from domination
+
+another
+event (cmd){
+    type
+    data{
+        data_arg1 {}
+        data_arg2 {}
+    }
+}
+
+trigger (source){
+    type: [shedule, gpio, ananlitics, MD ...]
+    output (cmd)
+    
+}
+
+ananlitics_source{
+    type: analitics
+    module: fire
+    status: detected\end
+
+    output: cmd2
+}
+
+cmd2{
+    type: Alarm
+    data{
+        type: light
+        enabled: true
+        time: 5 //secs
+    }
+}
+
+gpio_source{
+    type: gpio
+    input: Vswitch2
+    state: on_high
+    output: anal_off 
+}
+
+anal_off{
+    type: analitics
+    data{
+        type: module_off
+        module: crossline
+        state: off
+    }
+
+}
+
