@@ -6,6 +6,8 @@
 #include <iostream>
 #include "json.hpp"
 #include "event.hpp"
+#include "command.hpp"
+// #include "v2.h"
 
 using json = nlohmann::json;
 using namespace std;
@@ -16,7 +18,7 @@ using namespace std;
 /// Actions ARE editable via webAPI (POST create, DELETE remove).
 struct Action {
     string name;            ///< Action identifier (e.g. "act_set2")
-    vector<Event> cmds;     ///< Set of events to send when action is triggered
+    vector<Command> cmds;     ///< Set of events to send when action is triggered
 
     json toJson() const {
         json j;
@@ -34,7 +36,7 @@ struct Action {
         a.name = j.at("name");
         if (j.contains("cmds") && j["cmds"].is_array()) {
             for (const auto& cmd_j : j["cmds"]) {
-                a.cmds.push_back(Event::fromJson(cmd_j));
+                a.cmds.push_back(Command::fromJson(cmd_j));
             }
         }
         return a;
@@ -43,27 +45,35 @@ struct Action {
 
 /// Trigger-Action link: associates a trigger with an action,
 /// optionally with conditions for emitting.
-struct TriggerActionLink {
-    string trigger;     ///< Trigger name
+// bind trigger events to actions
+struct EventCommandLink {
+    string evn_key;     ///< Trigger name
     string action;      ///< Action name
-    string condition;   ///< Optional precondition for emitting
+    // for what?
+    // string condition;   ///< Optional precondition for emitting
 
     json toJson() const {
         json j;
-        j["trigger"] = trigger;
+        j["evn_key"] = evn_key;
         j["action"] = action;
-        if (!condition.empty()) {
-            j["condition"] = condition;
-        }
+        // if (!condition.empty()) {
+            // j["condition"] = condition;
+        // }
         return j;
     }
 
-    static TriggerActionLink fromJson(const json& j) {
-        TriggerActionLink link;
-        link.trigger = j.at("trigger");
+    static EventCommandLink fromJson(const json& j) {
+        EventCommandLink link;
+        link.evn_key = j.at("evn_key");
         link.action = j.at("action");
-        link.condition = j.value("condition", "");
+        // link.condition = j.value("condition", "");
         return link;
+    }
+    static string linkKey(const string& evn_key, const string& action){
+        return evn_key + "->"s + action;
+    }
+    string key() const{
+        return linkKey(evn_key, action);
     }
 };
 
@@ -101,30 +111,44 @@ public:
     }
 
     /// Link a trigger to an action
-    void addLink(const TriggerActionLink& link) {
-        string key = link.trigger + "->" + link.action;
-        links_[key] = link;
+    void addLink(const EventCommandLink& link) {
+        // string key = ;
+        links_[link.key()] = link;
     }
 
     /// Remove a trigger-action link
-    void removeLink(const string& trigger, const string& action) {
-        string key = trigger + "->" + action;
+    void removeLink(const string& evn_key, const string& action) {
+        string key = EventCommandLink::linkKey(evn_key,action);
         links_.erase(key);
     }
 
-    /// Get all actions linked to a given trigger name
-    vector<const Action*> getActionsForTrigger(const string& trigger_name) const {
-        vector<const Action*> result;
+    vector<const Action*> getActionsForEvn(const Event& evn){
+        vector<const Action *> res;
+        const auto evn_key = evn.key();
         for (const auto& [key, link] : links_) {
-            if (link.trigger == trigger_name) {
+            if (link.evn_key == evn.key()) {
                 auto it = actions_.find(link.action);
                 if (it != actions_.end()) {
-                    result.push_back(&it->second);
+                    res.push_back(&it->second);
                 }
             }
         }
-        return result;
+        return res;
     }
+
+    /// Get all actions linked to a given trigger name
+    // vector<const Action*> getActionsForTrigger(const string& trigger_name) const {
+    //     vector<const Action*> result;
+    //     for (const auto& [key, link] : links_) {
+    //         if (link.EnvKey == trigger_name) {
+    //             auto it = actions_.find(link.action);
+    //             if (it != actions_.end()) {
+    //                 result.push_back(&it->second);
+    //             }
+    //         }
+    //     }
+    //     return result;
+    // }
 
     /// Get all actions
     const unordered_map<string, Action>& allActions() const {
@@ -132,7 +156,7 @@ public:
     }
 
     /// Get all links
-    const unordered_map<string, TriggerActionLink>& allLinks() const {
+    const unordered_map<string, EventCommandLink>& allLinks() const {
         return links_;
     }
 
@@ -155,6 +179,6 @@ public:
     }
 
 private:
-    unordered_map<string, Action> actions_;
-    unordered_map<string, TriggerActionLink> links_;
+    unordered_map<string, Action> actions_; //all actions
+    unordered_map<string, EventCommandLink> links_; // store actions for targets // by event keys
 };

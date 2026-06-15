@@ -10,6 +10,7 @@
 #include <memory>
 #include <functional>
 #include <iostream>
+#include "event_system/command.hpp"
 #include "json.hpp"
 #include "event.hpp"
 #include "target.hpp"
@@ -46,14 +47,14 @@ public:
 
     /// Send an event immediately to all subscribed targets
     /// Used by triggers to emit events
-    void sendEvent(const Event& evn);
+    void sendCmd(const Command& evn);
 
     /// Push an event into the queue for async processing
-    void pushEvent(const Event& evn);
+    void pushCommand(const Command& evn);
 
     /// Process a trigger event: find linked actions and send their cmds
     /// This implements the trigger -> action -> events -> targets pipeline
-    void processTriggerEvent(const string& trigger_name, const Event& trigger_event);
+    void processTriggerEvent(const Event& trigger_event);
 
     /// Start the background event processing thread
     void start();
@@ -66,17 +67,17 @@ public:
 
 private:
     /// Deliver a single event to matching targets
-    void deliverToTargets(const Event& evn);
+    void deliverToTargets(const Command& evn);
 
     shared_ptr<TargetList> targets_;
     shared_ptr<TriggerList> triggers_;
     shared_ptr<ActionList> actions_;
 
-    // Target subscriptions: event_key -> list of target names
-    unordered_map<string, vector<string>> subscriptions_;
+    // Target subscriptions: command_key -> list of target names
+    unordered_map<string, vector<string>> subscriptions_; 
 
     // Async event queue
-    queue<Event> pending_events_;
+    queue<Command> pending_events_;
     mutex queue_mutex_;
     condition_variable queue_cv_;
     atomic<bool> running_{false};

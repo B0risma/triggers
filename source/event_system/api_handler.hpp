@@ -8,6 +8,7 @@
 #include "trigger.hpp"
 #include "action.hpp"
 #include "event_queue.hpp"
+#include "trigger_sample.hpp"
 
 using json = nlohmann::json;
 using namespace std;
@@ -31,12 +32,14 @@ public:
         shared_ptr<TargetList> targets,
         shared_ptr<TriggerList> triggers,
         shared_ptr<ActionList> actions,
-        shared_ptr<EventQueue> queue
+        shared_ptr<EventQueue> queue,
+        shared_ptr<VswitchList> switches
     ) {
         targets_ = targets;
         triggers_ = triggers;
         actions_ = actions;
         queue_ = queue;
+        switches_ = switches;
     }
 
     /// Register all API routes on the httplib server
@@ -44,6 +47,7 @@ public:
 
     // --- Route handlers ---
     void handleTriggerList(const httplib::Request& req, httplib::Response& res);
+    void handleSwitchList(const  httplib::Request& req, httplib::Response& res);
     void handleTargetList(const httplib::Request& req, httplib::Response& res);
     void handleActionList(const httplib::Request& req, httplib::Response& res);
     void handleActionCreate(const httplib::Request& req, httplib::Response& res);
@@ -57,11 +61,13 @@ public:
     static constexpr auto target_URI = "/target"s;
     static constexpr auto action_URI = "/action"s;
     static constexpr auto link_URI = "/link"s;
+    static constexpr auto switch_URI = "/switch"s;
 
 private:
     shared_ptr<TargetList> targets_;
     shared_ptr<TriggerList> triggers_;
     shared_ptr<ActionList> actions_;
     shared_ptr<EventQueue> queue_;
+    shared_ptr<VswitchList> switches_;
     static constexpr auto json_content = "text/json"s;
 };

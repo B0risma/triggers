@@ -1,3 +1,4 @@
+#include "event_system/command.hpp"
 #include "httplib.h"
 #include "json.hpp"
 #include <memory>
@@ -10,7 +11,7 @@
 #include "event_system/trigger.hpp"
 #include "event_system/action.hpp"
 #include "event_system/api_handler.hpp"
-#include "event_system/gpio_trigger.hpp"
+#include "event_system/trigger_sample.hpp"
 #include "event_system/fire_detector.hpp"
 
 using namespace std;
@@ -25,14 +26,16 @@ int main() {
     auto triggers  = make_shared<TriggerList>();
     auto actions   = make_shared<ActionList>();
     auto queue     = make_shared<EventQueue>();
+    auto switches = make_shared<VswitchList>();
+    switches->que = queue;
 
     // --- 2. Wire up the EventQueue with registries ---
     queue->setRegistries(targets, triggers, actions);
 
     // --- 3. Create and register Trigger examples ---
     // GPIO triggers: pins "in1" and "in2"
-    auto gpio_in1 = make_shared<GPIOTrigger>("gpio", "in1");
-    auto gpio_in2 = make_shared<GPIOTrigger>("gpio", "in2");
+    auto gpio_in1 = make_shared<GPIOTrigger>("in1");
+    auto gpio_in2 = make_shared<GPIOTrigger>("in2");
     gpio_in1->setEventQueue(queue);
     gpio_in2->setEventQueue(queue);
     triggers->add(gpio_in1);
@@ -50,7 +53,7 @@ int main() {
 
     // --- 6. Set up API handler ---
     APIHandler api;
-    api.setRegistries(targets, triggers, actions, queue);
+    api.setRegistries(targets, triggers, actions, queue, switches);
 
     httplib::Server srv;
     api.registerRoutes(srv);
@@ -80,14 +83,14 @@ int main() {
     Action act_set2;
     act_set2.name = "act_set2";
     act_set2.cmds = {
-        Event{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
-        Event{"alarm", "light", json{{"alarm_in", "light"}}}
+        Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
+        Command{"alarm", "light", json{{"alarm_in", "light"}}}
     };
     actions->addAction(act_set2);
 
     // Link trigger "in1" to action "act_set2"
-    TriggerActionLink link;
-    link.trigger = "in1";
+    EventCommandLink link;
+    link.evn_key = gpio_in1->evnKey();
     link.action = "act_set2";
     actions->addLink(link);
 

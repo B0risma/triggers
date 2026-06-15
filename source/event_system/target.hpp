@@ -5,8 +5,8 @@
 #include <memory>
 #include <functional>
 #include <iostream>
+#include "event_system/command.hpp"
 #include "json.hpp"
-#include "event.hpp"
 
 using json = nlohmann::json;
 using namespace std;
@@ -23,7 +23,7 @@ public:
     virtual ~Target() = default;
 
     /// Process an incoming event. Override in derived classes.
-    virtual void procEvent(const Event& evn) {
+    virtual void procEvent(const Command& evn) {
         cout << name << ": unhandled event " << evn.toString() << endl;
     }
 

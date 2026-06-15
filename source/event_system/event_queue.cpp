@@ -1,4 +1,5 @@
 #include "event_queue.hpp"
+#include "event_system/command.hpp"
 #include <algorithm>
 #include <exception>
 
@@ -34,12 +35,12 @@ void EventQueue::unsubscribeTarget(const string& target_name) {
     }
 }
 
-void EventQueue::sendEvent(const Event& evn) {
-    cout << "EventQueue::sendEvent: " << evn.toString() << endl;
+void EventQueue::sendCmd(const Command& evn) {
+    cout << "EventQueue::sendCmd: " << evn.toString() << endl;
     deliverToTargets(evn);
 }
 
-void EventQueue::pushEvent(const Event& evn) {
+void EventQueue::pushCommand(const Command& evn) {
     {
         lock_guard<mutex> lock(queue_mutex_);
         pending_events_.push(evn);
@@ -47,16 +48,16 @@ void EventQueue::pushEvent(const Event& evn) {
     queue_cv_.notify_one();
 }
 
-void EventQueue::processTriggerEvent(const string& trigger_name, const Event& trigger_event) {
-    cout << "EventQueue::processTriggerEvent: trigger='" << trigger_name
+void EventQueue::processTriggerEvent(const Event& trigger_event) {
+    cout << "EventQueue::processTriggerEvent: trigger='" /*<< trigger_name*/
          << "' event=" << trigger_event.toString() << endl;
 
     // First, send the trigger's event itself to any targets that subscribe to it
-    deliverToTargets(trigger_event);
+    // deliverToTargets(trigger_event);
 
     // Then, find all actions linked to this trigger and execute their cmds
     if (actions_) {
-        auto linked_actions = actions_->getActionsForTrigger(trigger_name);
+        auto linked_actions = actions_->getActionsForEvn(trigger_event);
         for (const auto* action : linked_actions) {
             cout << "EventQueue: executing action '" << action->name
                  << "' with " << action->cmds.size() << " cmds\n";
@@ -67,8 +68,8 @@ void EventQueue::processTriggerEvent(const string& trigger_name, const Event& tr
     }
 }
 
-void EventQueue::deliverToTargets(const Event& evn) {
-    string event_key = evn.key();
+void EventQueue::deliverToTargets(const Command& cmd) {
+    string event_key = cmd.key();
 
     // Find targets subscribed to this exact event key
     auto it = subscriptions_.find(event_key);
@@ -78,30 +79,30 @@ void EventQueue::deliverToTargets(const Event& evn) {
                 auto tgt = targets_->find(target_name);
                 if (tgt) {
                     cout << "EventQueue: delivering to target '" << target_name << "'\n";
-                    tgt->procEvent(evn);
+                    tgt->procEvent(cmd);
                 }
             }
         }
     }
 
     // Also find targets subscribed to the broad type (e.g. "analitics:" for all analitics events)
-    string broad_key = evn.type + ":";
-    auto broad_it = subscriptions_.find(broad_key);
-    if (broad_it != subscriptions_.end()) {
-        for (const auto& target_name : broad_it->second) {
-            if (targets_) {
-                auto tgt = targets_->find(target_name);
-                if (tgt) {
-                    // Avoid double delivery if already delivered via exact key
-                    if (it == subscriptions_.end() ||
-                        std::find(it->second.begin(), it->second.end(), target_name) == it->second.end()) {
-                        cout << "EventQueue: delivering (broad) to target '" << target_name << "'\n";
-                        tgt->procEvent(evn);
-                    }
-                }
-            }
-        }
-    }
+    // string broad_key = cmd.type + ":";
+    // auto broad_it = subscriptions_.find(broad_key);
+    // if (broad_it != subscriptions_.end()) {
+    //     for (const auto& target_name : broad_it->second) {
+    //         if (targets_) {
+    //             auto tgt = targets_->find(target_name);
+    //             if (tgt) {
+    //                 // Avoid double delivery if already delivered via exact key
+    //                 if (it == subscriptions_.end() ||
+    //                     std::find(it->second.begin(), it->second.end(), target_name) == it->second.end()) {
+    //                     cout << "EventQueue: delivering (broad) to target '" << target_name << "'\n";
+    //                     tgt->procEvent(evn);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void EventQueue::start() {
@@ -122,7 +123,7 @@ void EventQueue::stop() {
 
 void EventQueue::processLoop() {
     while (running_.load()) {
-        Event evn;
+        Command evn;
         {
             unique_lock<mutex> lock(queue_mutex_);
             queue_cv_.wait(lock, [this]() {

@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <functional>
+#include "event_system/command.hpp"
 #include "json.hpp"
 #include "target.hpp"
 #include "event.hpp"
@@ -30,7 +31,7 @@ public:
 
     /// Process event: handles type=="analitics", subtype=="fire"
     /// The event data contains "enabled" field that turns on/off module activity
-    void procEvent(const Event& evn) override {
+    void procEvent(const Command& evn) override {
         cout << "FireDetector '" << name << "': received event "
              << evn.toString() << endl;
 

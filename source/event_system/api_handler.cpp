@@ -1,5 +1,6 @@
 #include "api_handler.hpp"
 #include <exception>
+#include <functional>
 
 void APIHandler::registerRoutes(httplib::Server& srv) {
     // GET /trigger — trigger list by kinds (read-only)
@@ -40,6 +41,17 @@ void APIHandler::registerRoutes(httplib::Server& srv) {
     // DELETE /link — unlink trigger from action
     srv.Delete(link_URI, [this](const httplib::Request& req, httplib::Response& res) {
         handleLinkDelete(req, res);
+    });
+
+    
+    srv.Post(switch_URI, [this](const httplib::Request& req, httplib::Response& res) {
+        handleSwitchList(req, res);
+    });
+    srv.Patch(switch_URI, [this](const httplib::Request& req, httplib::Response& res) {
+        handleSwitchList(req, res);
+    });
+    srv.Delete(switch_URI, [this](const httplib::Request& req, httplib::Response& res) {
+        handleSwitchList(req, res);
     });
 
     cout << "APIHandler: routes registered\n";
@@ -133,10 +145,10 @@ void APIHandler::handleLinkList(const httplib::Request& req, httplib::Response& 
 void APIHandler::handleLinkCreate(const httplib::Request& req, httplib::Response& res) {
     try {
         auto j = json::parse(req.body);
-        auto link = TriggerActionLink::fromJson(j);
+        auto link = EventCommandLink::fromJson(j);
         if (actions_) {
             actions_->addLink(link);
-            res.set_content(json{{"status", "linked"}, {"trigger", link.trigger}, {"action", link.action}}.dump(), json_content);
+            res.set_content(json{{"status", "linked"}, {"Source", link.evn_key}, {"action", link.action}}.dump(), json_content);
         } else {
             res.status = 500;
             res.set_content(json{{"error", "no action registry"}}.dump(), json_content);
@@ -160,6 +172,29 @@ void APIHandler::handleLinkDelete(const httplib::Request& req, httplib::Response
         }
     } catch (const exception& ex) {
         res.status = 400;
+        res.set_content(json{{"error", ex.what()}}.dump(), json_content);
+    }
+}
+
+void APIHandler::handleSwitchList(const  httplib::Request& req, httplib::Response& res){
+    try {
+        
+        if (switches_) {
+            if(req.method == "POST"){
+                switches_->add(json::parse(req.body));
+            }
+            else if(req.method == "DELETE"){
+                switches_->del(req.get_param_value("name"));
+            }
+            else if(req.method == "PATCH"){
+                switches_->set(json::parse(req.body));
+            }
+        } else {
+            res.status = 500;
+            res.set_content(json::object().dump(), json_content);
+        }
+    } catch (const exception& ex) {
+        res.status = 500;
         res.set_content(json{{"error", ex.what()}}.dump(), json_content);
     }
 }

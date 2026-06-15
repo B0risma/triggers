@@ -8,7 +8,7 @@ void Trigger::setEventQueue(shared_ptr<EventQueue> q) {
 void Trigger::emitEvent(const Event& evn) const {
     auto strong_q = e_queue.lock();
     if (strong_q) {
-        strong_q->processTriggerEvent(name, evn);
+        strong_q->processTriggerEvent( evn);
     } else {
         cout << "Trigger::emitEvent: no event queue for trigger '" << name << "'\n";
     }
