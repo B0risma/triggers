@@ -52,7 +52,7 @@ int main(){
 
     auto q = make_shared<EventQueue>();
     
-    Toggle trig{};
+    Switch trig{};
     trig.setEventQueue(q);
 
     cv_ctrl targ{};

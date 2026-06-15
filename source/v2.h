@@ -123,6 +123,8 @@ struct Trigger{
     virtual void emitEvent() const{};
 
     weak_ptr<EventQueue> e_queue; // weak_ptr for safety
+
+    static unordered_map<string, noown_ptr<Trigger>>  trg_list;
 };
 
 
@@ -161,16 +163,15 @@ struct cv_ctrl : public Target{
     bool state = true;
 };
 
-struct Toggle : public Trigger{
+struct Switch : public Trigger{
     void emitEvent()const override{
         cout << __func__ << endl;
         auto strong_q = e_queue.lock();
         if(strong_q) {
             // strong_q->pushEvent(cv_event{});
-            strong_q->sendEvent(cv_event{});
+            strong_q->sendEvent(cmd);
         }
     };
-
-    // Event on_evn;
-    // Event off_evn;
+    Event cmd;
 };
+

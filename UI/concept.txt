@@ -67,7 +67,12 @@ Target Menu:
 -----------------------------
 Better - from domination
 
-another
+API - create eventList, not an one event 
+Evenlists{
+    event1
+    event2
+    ....
+}
 event (cmd){
     type
     data{
@@ -78,8 +83,7 @@ event (cmd){
 
 trigger (source){
     type: [shedule, gpio, ananlitics, MD ...]
-    output (cmd)
-    
+    EventList #1 - eventlist obj
 }
 
 ananlitics_source{
