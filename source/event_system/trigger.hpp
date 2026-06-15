@@ -33,13 +33,12 @@ public:
 
     /// Get the trigger's static info (kind + available subtypes)
     /// Used for the GET trigger list API response
-    virtual json getDescriptor() const {
-        return json{
-            {"name", name},
-            {"kind", kind}
-        };
-    }
-
+    // virtual json getDescriptor() const {
+    //     return json{
+    //         {"name", name},
+    //         {"kind", kind}
+    //     };
+    // }
 protected:
     weak_ptr<EventQueue> e_queue;
 };

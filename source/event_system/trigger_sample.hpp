@@ -31,7 +31,9 @@ public:
         name = pin_id;
         kind = gpio_kind;
     }
-
+    virtual Event createEvent(GPIO_edge edge)const {
+        return GPIOEvent(pin_id, edge);
+    }
     /// Simulate a state change on the GPIO pin.
     /// When state changes, emit an event into the queue.
     void setState(bool new_state) {
@@ -39,14 +41,8 @@ public:
         if (old != new_state) {
             cout << "GPIOTrigger: pin '" << pin_id << "' changed to "
                  << (new_state ? "HIGH" : "LOW") << "\n";
-            Event evn;
-            evn.type = kind;           // "gpio"
-            evn.source = pin_id;      // "in1", "in2", etc.
-            evn.data = json{
-                {"pin", pin_id},
-                {"state", new_state}
-            };
-            emitEvent(evn);
+            auto edge = old > new_state ? GPIO_edge::Falling : GPIO_edge::Rising;
+            emitEvent(createEvent(edge));
         }
     }
 
@@ -56,14 +52,14 @@ public:
     }
 
     /// Descriptor for trigger listing
-    json getDescriptor() const override {
-        return json{
-            {"name", name},
-            {"kind", kind},
-            {"pin", pin_id},
-            {"state", state.load()}
-        };
-    }
+    // json getDescriptor() const override {
+    //     return json{
+    //         {"name", name},
+    //         {"kind", kind},
+    //         {"pin", pin_id},
+    //         {"state", state.load()}
+    //     };
+    // }
 
     // /// Start periodic state simulation (for demo/testing).
     // /// Alternates state every `interval_ms` milliseconds.
@@ -109,6 +105,9 @@ struct Vswitch : public GPIOTrigger{
     GPIOTrigger(pin_name){
         pin_id = pin_name;
         name = pin_name;
+    }
+    virtual Event createEvent(GPIO_edge edge)const override{
+        return VswitchEvent(pin_id, edge);
     }
 
 };
