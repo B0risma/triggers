@@ -18,7 +18,7 @@ class Target {
 public:
     string name;                        ///< Target identifier (e.g. "fire_detector_1")
     string type_name;                   ///< Target type (e.g. "fire_detector")
-    set<string> supported_events;       ///< Set of event keys ("analitics:fire", etc.)
+    set<string> supported_cmds;       ///< Set of event keys ("analitics:fire", etc.)
 
     virtual ~Target() = default;
 
@@ -28,8 +28,8 @@ public:
     }
 
     /// Check if this target can handle a given event key
-    bool canHandle(const string& event_key) const {
-        return supported_events.count(event_key) > 0;
+    bool canHandle(const string& cmd_key) const {
+        return supported_cmds.count(cmd_key) > 0;
     }
 
     /// Serialize target info to JSON (for listing)
@@ -37,7 +37,7 @@ public:
         json j;
         j["name"] = name;
         j["type"] = type_name;
-        j["supported_events"] = supported_events;
+        j["supported_events"] = supported_cmds;
         return j;
     }
 };

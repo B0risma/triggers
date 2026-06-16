@@ -9,7 +9,7 @@ using json = nlohmann::json;
 using namespace std;
 
 
-BETTER_ENUM(EventType, uint8_t, NoType=0, GPIO=1, VirtSwitch, Analityc, Shedule);
+BETTER_ENUM(EventType, uint8_t, NoType=0, GPIO=1, VirtSwitch, Analitic, Shedule);
 
 
 /// Core event data structure.
@@ -73,7 +73,7 @@ BETTER_ENUM(DetectorType, uint8_t, Fire, Smoke, Weapon, Sabotage, Cross_line); /
 BETTER_ENUM(AlarmEdge, uint8_t, Start = 1, End = 0);
 struct AnaliticEvent : public Event{
     AnaliticEvent(const DetectorType detector, AlarmEdge started = AlarmEdge::End){
-        type = EventType::Analityc;
+        type = EventType::Analitic;
         source = detector._to_string();
         data["alarmEdge"] = started._to_string();
     }

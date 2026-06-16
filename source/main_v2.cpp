@@ -82,10 +82,11 @@ int main() {
     // Create an action with a fire detector command and an alarm command
     Action act_set2;
     act_set2.name = "act_set2";
-    act_set2.cmds = {
-        Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
-        Command{"alarm", "light", json{{"alarm_in", "light"}}}
-    };
+    act_set2.cmds = {AnaliticCmd("Fire", true)};
+    // act_set2.cmds = {
+    //     Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
+    //     Command{"alarm", "light", json{{"alarm_in", "light"}}}
+    // };
     actions->addAction(act_set2);
 
     // Link trigger "in1" to action "act_set2"

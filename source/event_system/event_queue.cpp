@@ -1,5 +1,6 @@
 #include "event_queue.hpp"
 #include "event_system/command.hpp"
+#include "event_system/event.hpp"
 #include <algorithm>
 #include <exception>
 
@@ -14,19 +15,19 @@ void EventQueue::subscribeTarget(shared_ptr<Target> target) {
         targets_->add(target);
     }
     // Subscribe target to its supported event keys
-    for (const auto& event_key : target->supported_events) {
+    for (const auto& event_key : target->supported_cmds) {
         subscriptions_[event_key].push_back(target->name);
     }
     cout << "EventQueue: subscribed target '" << target->name
          << "' (" << target->type_name << ") for "
-         << target->supported_events.size() << " event types\n";
+         << target->supported_cmds.size() << " event types\n";
 }
 
 void EventQueue::unsubscribeTarget(const string& target_name) {
     if (targets_) {
         auto tgt = targets_->find(target_name);
         if (tgt) {
-            for (const auto& event_key : tgt->supported_events) {
+            for (const auto& event_key : tgt->supported_cmds) {
                 auto& subs = subscriptions_[event_key];
                 std::erase(subs, target_name);
             }
@@ -61,7 +62,13 @@ void EventQueue::processTriggerEvent(const Event& trigger_event) {
         for (const auto* action : linked_actions) {
             cout << "EventQueue: executing action '" << action->name
                  << "' with " << action->cmds.size() << " cmds\n";
-            for (const auto& cmd : action->cmds) {
+            for (auto cmd : action->cmds) {
+                if(trigger_event.type == EventType(EventType::GPIO) || trigger_event.type == EventType(EventType::VirtSwitch))
+                {
+                    auto edge = GPIO_edge::_from_string(static_cast<const string&>(trigger_event.data.value("edge", "")).c_str());
+                    cmd.data["state"] = bool(edge._value);
+                }
+                
                 deliverToTargets(cmd);
             }
         }

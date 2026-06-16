@@ -126,7 +126,7 @@ public:
         vector<const Action *> res;
         const auto evn_key = evn.key();
         for (const auto& [key, link] : links_) {
-            if (link.evn_key == evn.key()) {
+            if (link.evn_key == evn_key) {
                 auto it = actions_.find(link.action);
                 if (it != actions_.end()) {
                     res.push_back(&it->second);
