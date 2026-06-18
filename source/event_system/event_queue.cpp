@@ -3,6 +3,7 @@
 #include "event_system/event.hpp"
 #include <algorithm>
 #include <exception>
+#include <string>
 
 EventQueue::~EventQueue() {
     stop();
@@ -36,20 +37,20 @@ void EventQueue::unsubscribeTarget(const string& target_name) {
     }
 }
 
-void EventQueue::sendCmd(const Command& evn) {
+void EventQueue::sendEvent(Event &evn) {
     cout << "EventQueue::sendCmd: " << evn.toString() << endl;
-    deliverToTargets(evn);
+    processTriggerEvent(std::move(evn));
 }
 
-void EventQueue::pushCommand(const Command& evn) {
+void EventQueue::pushEvent(Event& evn) {
     {
         lock_guard<mutex> lock(queue_mutex_);
-        pending_events_.push(evn);
+        pending_events_.emplace(std::move(evn));
     }
     queue_cv_.notify_one();
 }
 
-void EventQueue::processTriggerEvent(const Event& trigger_event) {
+void EventQueue::processTriggerEvent(Event &&trigger_event) {
     cout << "EventQueue::processTriggerEvent: trigger='" /*<< trigger_name*/
          << "' event=" << trigger_event.toString() << endl;
 
@@ -62,21 +63,15 @@ void EventQueue::processTriggerEvent(const Event& trigger_event) {
         for (const auto* action : linked_actions) {
             cout << "EventQueue: executing action '" << action->name
                  << "' with " << action->cmds.size() << " cmds\n";
-            for (auto cmd : action->cmds) {
-                if(trigger_event.type == EventType(EventType::GPIO) || trigger_event.type == EventType(EventType::VirtSwitch))
-                {
-                    auto edge = GPIO_edge::_from_string(static_cast<const string&>(trigger_event.data.value("edge", "")).c_str());
-                    cmd.data["state"] = bool(edge._value);
-                }
-                
-                deliverToTargets(cmd);
+            for (auto rule : action->cmds) {
+                deliverToTargets({rule, std::move(trigger_event)});
             }
         }
     }
 }
 
-void EventQueue::deliverToTargets(const Command& cmd) {
-    string event_key = cmd.key();
+void EventQueue::deliverToTargets(Command evn) {
+    const string event_key = evn.first.key();
 
     // Find targets subscribed to this exact event key
     auto it = subscriptions_.find(event_key);
@@ -86,7 +81,7 @@ void EventQueue::deliverToTargets(const Command& cmd) {
                 auto tgt = targets_->find(target_name);
                 if (tgt) {
                     cout << "EventQueue: delivering to target '" << target_name << "'\n";
-                    tgt->procEvent(cmd);
+                    tgt->procEvent(std::move(evn));
                 }
             }
         }
@@ -130,7 +125,7 @@ void EventQueue::stop() {
 
 void EventQueue::processLoop() {
     while (running_.load()) {
-        Command evn;
+        Event evn;
         {
             unique_lock<mutex> lock(queue_mutex_);
             queue_cv_.wait(lock, [this]() {
@@ -138,9 +133,9 @@ void EventQueue::processLoop() {
             });
             if (!running_.load() && pending_events_.empty()) break;
             if (pending_events_.empty()) continue;
-            evn = pending_events_.front();
+            std::swap(evn,pending_events_.front());
             pending_events_.pop();
         }
-        deliverToTargets(evn);
+        processTriggerEvent(std::move(evn));
     }
 }

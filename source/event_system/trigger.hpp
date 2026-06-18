@@ -29,7 +29,11 @@ public:
     void setEventQueue(shared_ptr<EventQueue> q);
 
     /// Emit an event into the event queue. Override to define trigger behavior.
-    virtual void emitEvent(const Event& evn) const;
+    void emitEvent(Event&& evn) const;
+    inline void emitEvent(const Event& evn) const{
+        Event cp = evn;
+        emitEvent(std::move(cp));
+    }
 
     /// Get the trigger's static info (kind + available subtypes)
     /// Used for the GET trigger list API response

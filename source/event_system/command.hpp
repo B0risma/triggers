@@ -5,11 +5,12 @@
 #include <utility>
 #include "json.hpp"
 #include "enum.h"
+#include "event.hpp"
 
 using json = nlohmann::json;
 using namespace std;
 
-BETTER_ENUM(CommandType, uint8_t, Invalid = 0, Analitic, Video, Alarm); //.....
+BETTER_ENUM(RuleType, uint8_t, Invalid = 0, Analitic, Video, Alarm); //.....
 //Command to process
 /// Core Command structure
 
@@ -21,8 +22,9 @@ BETTER_ENUM(CommandType, uint8_t, Invalid = 0, Analitic, Video, Alarm); //.....
 ...
 }
 */
-struct Command {
-    CommandType type = CommandType::Invalid;      ///< Cmd type for target routing
+#pragma message("these are cmd TEMPLATES!!! not ready to invoke cmd - no data!!!")
+struct Rule {
+    RuleType type = RuleType::Invalid;      ///< Cmd type for target routing
     string target;   ///< addition field for routing - not used now
     json data;        ///< type specific data arguments: detector name for Analitics, preset for Video ...
 
@@ -39,7 +41,7 @@ struct Command {
         return tmp;
     }
 
-    static std::optional<Command> fromJson(const json& j) noexcept;
+    static std::optional<Rule> fromJson(const json& j) noexcept;
 
     /// Composite key for routing: type+target
     string key() const {
@@ -56,9 +58,9 @@ timeout - for single-shots (not implemented now)
 */
 
 BETTER_ENUM(AnaliticCmdType, uint8_t, toggle);
-struct AnaliticCmd : public Command{
+struct AnaliticCmd : public Rule{
     AnaliticCmd(string detector,  bool state = true){
-        type = CommandType::Analitic;
+        type = RuleType::Analitic;
         data["subtype"] = AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
         data["detector"] = detector;
         data["state"] = state;
@@ -67,33 +69,69 @@ struct AnaliticCmd : public Command{
     string detector() const{
         return data.value("detector", "");
     }
-    std::optional<bool> state() const{
-        if(!data.count("state")) return {};
-        return data.value("state", false);
+    AnaliticCmdType subtype() const{
+        return AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str());
+    }
+
+    bool fillEventData(const Event &evn){
+        auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
+        if(s_type == AnaliticCmdType::toggle){
+            data["state"] = evn.data.at("state");
+        }
+        // else if(false){
+        //     some types
+        // }
+        else return false;
+
+        return true;
     }
 };
 
-struct VideoCmd final : public Command{
+struct VideoCmd final : public Rule{
     VideoCmd(){
-        type = CommandType::Video;
+        type = RuleType::Video;
         data["subtype"] = "Preset"; //?!
         data["preset_on"] = "preset1";
         data["preset_off"] = "preset2";
+    }
+    bool fillEventData(const Event &evn){
+        if(data.at("subtype") == "Preset"){
+            data["preset"] = evn.data.at("state") ? data.at("preset_on") : data.at("preset_off");
+        }
+        // else if(false){
+        //     some types
+        // }
+        else return false;
+
+        return true;
     }
 };
 
 BETTER_ENUM(AlarmCmdType, uint8_t, WhiteLight, RedBlue, Sound);//.....
 BETTER_ENUM(AlarmCmdSubtype, uint8_t, Toggle, SingleShot);
 //single shot only
-struct AlarmCmd final : public Command{
+struct AlarmCmd final : public Rule{
     AlarmCmd(const AlarmCmdType alarm_type, const AlarmCmdSubtype subtype, bool state = false){
-        type = CommandType::Alarm;
+        type = RuleType::Alarm;
         target = alarm_type._to_string(); // rebblue, sound, ....
         data["subtype"] = subtype._to_string();
         if(subtype._value == AlarmCmdSubtype::Toggle){
             if(type._value == AlarmCmdType::Sound) throw logic_error("Sound cmd is single-shot only");
             data["state"] = state;
         }
+    }
+
+    bool fillEventData(const Event &evn){
+        auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
+        if(s_type == AnaliticCmdType::toggle){
+            data["state"] = evn.data.at("state");
+        }
+        // else if(false){
+        //     some types
+        // }
+        else return false;
+
+        return true;
     }
 };
 
@@ -132,20 +170,20 @@ struct CommandRange{
         json ret;
         {
             auto types = json::array();
-            for(const auto t : CommandType::_values()){
+            for(const auto t : RuleType::_values()){
                 types.push_back(t._to_string());
             }
             ret["type"] = types;
         }
 
         // enumerate type args
-        ret[(+CommandType::Analitic)._to_string()] = {
+        ret[(+RuleType::Analitic)._to_string()] = {
             {"subtype",{(+AnaliticCmdType::toggle)._to_string()}},
             {"fields", {"detector", "state"}
             },
         };
 
-        ret[(+CommandType::Video)._to_string()] = {
+        ret[(+RuleType::Video)._to_string()] = {
             {"fields",{"preset_on", "preset_off"}}
         };
         
@@ -171,9 +209,10 @@ struct CommandRange{
                 {(+AlarmCmdSubtype::SingleShot)._to_string(), {"timeout"}}
             };
 
-            ret[(+CommandType::Alarm)._to_string()] = tmp;
+            ret[(+RuleType::Alarm)._to_string()] = tmp;
         }
         return ret;
     }
 };
 
+using Command = std::pair<Rule, Event>;

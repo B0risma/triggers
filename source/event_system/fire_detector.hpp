@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <exception>
 #include <string>
 #include <iostream>
 #include <functional>
@@ -95,29 +96,39 @@ public:
     : Detector(instance_name){
         type_name = "fire_detector";
         // Subscribe to analitics:fire events
-        auto cmdKey = string(CommandType(CommandType::Analitic)._to_string()) + ":"s + AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
+        auto cmdKey = string(RuleType(RuleType::Analitic)._to_string()) + ":"s + AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
         supported_cmds = {std::move(cmdKey)};
     }
 
     /// Process event: handles type=="analitics", subtype=="fire"
     /// The event data contains "enabled" field that turns on/off module activity
-    void procEvent(const Command& cmd) override {
+    void procEvent(Command cmd) override {
         cout << "FireDetector '" << name << "': received event "
-             << cmd.toString() << endl;
+             << cmd.second.toString() << endl;
 
-        if(cmd.type._value != CommandType::Analitic){
-            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << cmd.toString() << endl;
+        const auto& rule = cmd.first;
+        const auto& evn = cmd.second;
+        if(rule.type._value != RuleType::Analitic){
+            cout << __PRETTY_FUNCTION__ << " skip cmd: " << rule.toString() << endl;
             return;
         }
 
-        const auto& ai_cmd = static_cast<const AnaliticCmd &>(cmd);
+        const auto& ai_cmd = static_cast<const AnaliticCmd &>(rule);
         if(ai_cmd.detector() !=  DetectorType(DetectorType::Fire)._to_string()){
-            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << cmd.toString() << endl;
+            cout << __PRETTY_FUNCTION__ << " skip cmd: " << rule.toString() << endl;
             return;
         }
 
-        const auto& state = ai_cmd.state();
-        if(state.has_value()) setEnabled(state.value());
+        try{
+            auto s_type = ai_cmd.subtype()._value;
+            if(s_type == AnaliticCmdType::toggle){
+                evn.data.at("state");
+                setEnabled(evn.data.at("state"));    
+            }
+        }
+        catch(const exception &ex){
+            cout << __PRETTY_FUNCTION__ << ": " << ex.what() << endl;
+        }
     }
 };
 
@@ -128,28 +139,38 @@ public:
     : Detector(instance_name){
         type_name = "weapon_detector";
         // Subscribe to analitics:fire events
-        auto cmdKey = string(CommandType(CommandType::Analitic)._to_string()) + ":"s + DetectorType(DetectorType::Weapon)._to_string();
+        auto cmdKey = string(RuleType(RuleType::Analitic)._to_string()) + ":"s + DetectorType(DetectorType::Weapon)._to_string();
         supported_cmds = {std::move(cmdKey)};
     }
 
     /// Process event: handles type=="analitics", subtype=="fire"
     /// The event data contains "enabled" field that turns on/off module activity
-    void procEvent(const Command& cmd) override {
+    void procEvent(Command cmd) override {
+        const auto& rule = cmd.first;
+        const auto& evn = cmd.second;
         cout << "WeaponDetector '" << name << "': received event "
-             << cmd.toString() << endl;
+             << evn.toString() << endl;
 
-        if(cmd.type._value != CommandType::Analitic){
-            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << cmd.toString() << endl;
+        if(rule.type._value != RuleType::Analitic){
+            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << rule.toString() << endl;
             return;
         }
 
-        const auto& ai_cmd = static_cast<const AnaliticCmd &>(cmd);
+        const auto& ai_cmd = static_cast<const AnaliticCmd &>(rule);
         if(ai_cmd.detector() !=  DetectorType(DetectorType::Weapon)._to_string()){
-            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << cmd.toString() << endl;
+            cout << __PRETTY_FUNCTION__ << " sckip cmd: " << rule.toString() << endl;
             return;
         }
 
-        const auto& state = ai_cmd.state();
-        if(state.has_value()) setEnabled(state.value());
+        try{
+            auto s_type = ai_cmd.subtype()._value;
+            if(s_type == AnaliticCmdType::toggle){
+                evn.data.at("state");
+                setEnabled(evn.data.at("state"));    
+            }
+        }
+        catch(const exception &ex){
+            cout << __PRETTY_FUNCTION__ << ": " << ex.what() << endl;
+        }
     }
 };

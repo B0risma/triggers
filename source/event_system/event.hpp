@@ -48,23 +48,22 @@ struct Event {
     }
 };
 
-BETTER_ENUM(GPIO_edge, uint8_t, Falling = 0,Rising = 1);
-
+// event occurs only when state changed
 struct GPIOEvent : public Event{
-    GPIOEvent(const string gpio_num, GPIO_edge edge = GPIO_edge::Falling)
+    GPIOEvent(const string gpio_num, bool new_state)
     /*: edge_(edge)*/{
         type = EventType::GPIO;
         source = gpio_num;
-        data["edge"] = edge._to_string();
+        data["state"] = new_state;
     }
     // GPIO_edge edge_ = GPIO_edge::Falling;
 };
 
 struct VswitchEvent : public Event{
-    VswitchEvent(const string gpio_num, GPIO_edge edge = GPIO_edge::Falling){
+    VswitchEvent(const string gpio_num,  bool new_state){
         type = EventType::VirtSwitch;
         source = gpio_num;
-        data["edge"] = edge._to_string();
+        data["state"] = new_state;
     }
 };
 

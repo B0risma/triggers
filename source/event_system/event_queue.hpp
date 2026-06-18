@@ -47,14 +47,14 @@ public:
 
     /// Send an event immediately to all subscribed targets
     /// Used by triggers to emit events
-    void sendCmd(const Command& evn);
+    void sendEvent(Event &evn);
 
     /// Push an event into the queue for async processing
-    void pushCommand(const Command& evn);
+    void pushEvent(Event &evn);
 
     /// Process a trigger event: find linked actions and send their cmds
     /// This implements the trigger -> action -> events -> targets pipeline
-    void processTriggerEvent(const Event& trigger_event);
+    void processTriggerEvent(Event&& trigger_event);
 
     /// Start the background event processing thread
     void start();
@@ -67,7 +67,7 @@ public:
 
 private:
     /// Deliver a single event to matching targets
-    void deliverToTargets(const Command& evn);
+    void deliverToTargets(Command evn);
 
     shared_ptr<TargetList> targets_;
     shared_ptr<TriggerList> triggers_;
@@ -77,7 +77,7 @@ private:
     unordered_map<string, vector<string>> subscriptions_; 
 
     // Async event queue
-    queue<Command> pending_events_;
+    queue<Event> pending_events_;
     mutex queue_mutex_;
     condition_variable queue_cv_;
     atomic<bool> running_{false};

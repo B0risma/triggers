@@ -31,8 +31,8 @@ public:
         name = pin_id;
         kind = gpio_kind;
     }
-    virtual Event createEvent(GPIO_edge edge)const {
-        return GPIOEvent(pin_id, edge);
+    virtual Event createEvent(bool new_state)const {
+        return GPIOEvent(pin_id, new_state);
     }
     /// Simulate a state change on the GPIO pin.
     /// When state changes, emit an event into the queue.
@@ -41,8 +41,7 @@ public:
         if (old != new_state) {
             cout << "GPIOTrigger: pin '" << pin_id << "' changed to "
                  << (new_state ? "HIGH" : "LOW") << "\n";
-            auto edge = old > new_state ? GPIO_edge::Falling : GPIO_edge::Rising;
-            emitEvent(createEvent(edge));
+            emitEvent(createEvent(new_state));
         }
     }
 
@@ -106,8 +105,8 @@ struct Vswitch : public GPIOTrigger{
         pin_id = pin_name;
         name = pin_name;
     }
-    virtual Event createEvent(GPIO_edge edge)const override{
-        return VswitchEvent(pin_id, edge);
+    virtual Event createEvent(bool new_state)const override{
+        return VswitchEvent(pin_id, new_state);
     }
 
 };

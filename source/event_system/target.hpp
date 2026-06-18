@@ -23,8 +23,8 @@ public:
     virtual ~Target() = default;
 
     /// Process an incoming event. Override in derived classes.
-    virtual void procEvent(const Command& evn) {
-        cout << name << ": unhandled event " << evn.toString() << endl;
+    virtual void procEvent(Command evn) {
+        cout << name << ": unhandled event " << evn.first.toString() << endl;
     }
 
     /// Check if this target can handle a given event key
