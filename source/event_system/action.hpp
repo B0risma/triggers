@@ -31,13 +31,13 @@ struct Action {
         return j;
     }
 
-    static Action fromJson(const json& j) {
+    static Action fromJson(const json& j) noexcept(false){
         Action a;
         a.name = j.at("name");
-        if (j.contains("cmds") && j["cmds"].is_array()) {
-            for (const auto& cmd_j : j["cmds"]) {
-                a.cmds.push_back(Command::fromJson(cmd_j));
-            }
+        const auto& cmds = j.at("cmds");
+        if(!cmds.is_array() || cmds.empty()) throw logic_error("empty cmds");
+        for (const auto& cmd_j : j["cmds"]) {
+            a.cmds.push_back(Command::fromJson(cmd_j).value());
         }
         return a;
     }

@@ -1,4 +1,5 @@
 #include "api_handler.hpp"
+#include "event_system/command.hpp"
 #include <exception>
 #include <functional>
 
@@ -85,6 +86,11 @@ void APIHandler::handleTargetList(const httplib::Request& req, httplib::Response
 
 void APIHandler::handleActionList(const httplib::Request& req, httplib::Response& res) {
     try {
+        if(req.has_param("range")){
+            res.set_content(CommandRange::getTypes().dump(), json_content);
+            return;
+        }
+        
         if (actions_) {
             res.set_content(actions_->actionsToJson().dump(), json_content);
         } else {
