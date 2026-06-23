@@ -94,15 +94,15 @@ class FireDetector : public Detector {
 public:
     FireDetector(const string& instance_name = "fire_detector_1")
     : Detector(instance_name){
-        type_name = "fire_detector";
+        // type_name = "fire_detector";
         // Subscribe to analitics:fire events
-        auto cmdKey = string(RuleType(RuleType::Analitic)._to_string()) + ":"s + AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
-        supported_cmds = {std::move(cmdKey)};
+        auto rule_key = Rule::ruleKey(RuleType(RuleType::Analitic), DetectorType(DetectorType::Fire)._to_string());
+        supported_rules = {std::move(rule_key)};
     }
 
     /// Process event: handles type=="analitics", subtype=="fire"
     /// The event data contains "enabled" field that turns on/off module activity
-    void procEvent(Command cmd) override {
+    void procEvent(const Command &cmd) override {
         cout << "FireDetector '" << name << "': received event "
              << cmd.second.toString() << endl;
 
@@ -137,15 +137,15 @@ class WeaponDetector : public Detector {
 public:
     WeaponDetector(const string& instance_name = "weapon_detector_1")
     : Detector(instance_name){
-        type_name = "weapon_detector";
+        // type_name = "weapon_detector";
         // Subscribe to analitics:fire events
-        auto cmdKey = string(RuleType(RuleType::Analitic)._to_string()) + ":"s + DetectorType(DetectorType::Weapon)._to_string();
-        supported_cmds = {std::move(cmdKey)};
+        auto rule_key = Rule::ruleKey(RuleType(RuleType::Analitic), DetectorType(DetectorType::Weapon)._to_string());
+        supported_rules = {std::move(rule_key)};
     }
 
     /// Process event: handles type=="analitics", subtype=="fire"
     /// The event data contains "enabled" field that turns on/off module activity
-    void procEvent(Command cmd) override {
+    void procEvent(const Command &cmd) override {
         const auto& rule = cmd.first;
         const auto& evn = cmd.second;
         cout << "WeaponDetector '" << name << "': received event "

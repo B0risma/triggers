@@ -45,6 +45,9 @@ struct Rule {
 
     /// Composite key for routing: type+target
     string key() const {
+        return ruleKey(type, target);
+    }
+    static string ruleKey(const RuleType& type, const string& target = {}){
         return type._to_string() + string(target.empty() ? "" : (":" + target));
     }
 };
@@ -63,6 +66,7 @@ struct AnaliticCmd : public Rule{
         type = RuleType::Analitic;
         data["subtype"] = AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
         data["detector"] = detector;
+        target = detector;
         // data["state"] = state;
     }
 

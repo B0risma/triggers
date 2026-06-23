@@ -16,19 +16,19 @@ void EventQueue::subscribeTarget(shared_ptr<Target> target) {
         targets_->add(target);
     }
     // Subscribe target to its supported event keys
-    for (const auto& event_key : target->supported_cmds) {
+    for (const auto& event_key : target->supported_rules) {
         subscriptions_[event_key].push_back(target->name);
     }
     cout << "EventQueue: subscribed target '" << target->name
-         << "' (" << target->type_name << ") for "
-         << target->supported_cmds.size() << " event types\n";
+         << "' (" /*<< target->type_name*/ << ") for "
+         << target->supported_rules.size() << " event types\n";
 }
 
 void EventQueue::unsubscribeTarget(const string& target_name) {
     if (targets_) {
         auto tgt = targets_->find(target_name);
         if (tgt) {
-            for (const auto& event_key : tgt->supported_cmds) {
+            for (const auto& event_key : tgt->supported_rules) {
                 auto& subs = subscriptions_[event_key];
                 std::erase(subs, target_name);
             }
@@ -50,7 +50,7 @@ void EventQueue::pushEvent(Event& evn) {
     queue_cv_.notify_one();
 }
 
-void EventQueue::processTriggerEvent(Event &&trigger_event) {
+void EventQueue::processTriggerEvent(Event trigger_event) {
     cout << "EventQueue::processTriggerEvent: trigger='" /*<< trigger_name*/
          << "' event=" << trigger_event.toString() << endl;
 
@@ -64,24 +64,24 @@ void EventQueue::processTriggerEvent(Event &&trigger_event) {
             cout << "EventQueue: executing action '" << action->name
                  << "' with " << action->rules.size() << " cmds\n";
             for (auto rule : action->rules) {
-                deliverToTargets({rule, std::move(trigger_event)});
+                deliverToTargets({rule, trigger_event});
             }
         }
     }
 }
 
 void EventQueue::deliverToTargets(Command evn) {
-    const string event_key = evn.first.key();
+    const string rule_key = evn.first.key();
 
     // Find targets subscribed to this exact event key
-    auto it = subscriptions_.find(event_key);
+    auto it = subscriptions_.find(rule_key);
     if (it != subscriptions_.end()) {
         for (const auto& target_name : it->second) {
             if (targets_) {
                 auto tgt = targets_->find(target_name);
                 if (tgt) {
                     cout << "EventQueue: delivering to target '" << target_name << "'\n";
-                    tgt->procEvent(std::move(evn));
+                    tgt->procEvent(evn);
                 }
             }
         }

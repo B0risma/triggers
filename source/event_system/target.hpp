@@ -17,27 +17,27 @@ using namespace std;
 class Target {
 public:
     string name;                        ///< Target identifier (e.g. "fire_detector_1")
-    string type_name;                   ///< Target type (e.g. "fire_detector")
-    set<string> supported_cmds;       ///< Set of event keys ("analitics:fire", etc.)
+    // string type_name;                   ///< Target type (e.g. "fire_detector")
+    set<string> supported_rules;       ///< Set of event keys ("analitics:fire", etc.)
 
     virtual ~Target() = default;
 
     /// Process an incoming event. Override in derived classes.
-    virtual void procEvent(Command evn) {
+    virtual void procEvent(const Command &evn) {
         cout << name << ": unhandled event " << evn.first.toString() << endl;
     }
 
     /// Check if this target can handle a given event key
-    bool canHandle(const string& cmd_key) const {
-        return supported_cmds.count(cmd_key) > 0;
+    bool canHandle(const string& rule_key) const {
+        return supported_rules.count(rule_key) > 0;
     }
 
     /// Serialize target info to JSON (for listing)
     virtual json toJson() const {
         json j;
         j["name"] = name;
-        j["type"] = type_name;
-        j["supported_events"] = supported_cmds;
+        // j["type"] = type_name;
+        j["supported_rules"] = supported_rules;
         return j;
     }
 };
@@ -67,10 +67,10 @@ public:
     }
 
     /// Get all targets that can handle a specific event key
-    vector<Ptr> findByEvent(const string& event_key) const {
+    vector<Ptr> findByRule(const string& rule_key) const {
         vector<Ptr> result;
         for (const auto& [_, tgt] : targets_) {
-            if (tgt->canHandle(event_key)) {
+            if (tgt->canHandle(rule_key)) {
                 result.push_back(tgt);
             }
         }

@@ -54,7 +54,7 @@ public:
 
     /// Process a trigger event: find linked actions and send their cmds
     /// This implements the trigger -> action -> events -> targets pipeline
-    void processTriggerEvent(Event&& trigger_event);
+    void processTriggerEvent(Event trigger_event);
 
     /// Start the background event processing thread
     void start();
@@ -73,7 +73,7 @@ private:
     shared_ptr<TriggerList> triggers_;
     shared_ptr<ActionList> actions_;
 
-    // Target subscriptions: command_key -> list of target names
+    // Target subscriptions: rule_key -> list of target names
     unordered_map<string, vector<string>> subscriptions_; 
 
     // Async event queue
