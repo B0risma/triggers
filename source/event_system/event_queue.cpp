@@ -1,5 +1,5 @@
 #include "event_queue.hpp"
-#include "event_system/command.hpp"
+#include "rule.hpp"
 #include "event_system/event.hpp"
 #include <algorithm>
 #include <exception>
@@ -62,8 +62,8 @@ void EventQueue::processTriggerEvent(Event &&trigger_event) {
         auto linked_actions = actions_->getActionsForEvn(trigger_event);
         for (const auto* action : linked_actions) {
             cout << "EventQueue: executing action '" << action->name
-                 << "' with " << action->cmds.size() << " cmds\n";
-            for (auto rule : action->cmds) {
+                 << "' with " << action->rules.size() << " cmds\n";
+            for (auto rule : action->rules) {
                 deliverToTargets({rule, std::move(trigger_event)});
             }
         }
@@ -125,7 +125,7 @@ void EventQueue::stop() {
 
 void EventQueue::processLoop() {
     while (running_.load()) {
-        Event evn;
+        auto evn = Event::dummyEvent();
         {
             unique_lock<mutex> lock(queue_mutex_);
             queue_cv_.wait(lock, [this]() {

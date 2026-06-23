@@ -1,4 +1,4 @@
-#include "event_system/command.hpp"
+#include "event_system/rule.hpp"
 #include "httplib.h"
 #include "json.hpp"
 #include <memory>
@@ -83,7 +83,7 @@ int main() {
     // Create an action with a fire detector command and an alarm command
     Action act_set2;
     act_set2.name = "act_set2";
-    act_set2.cmds = {AnaliticCmd("Fire", true)};
+    act_set2.rules = {AnaliticCmd("Fire")};
     // act_set2.cmds = {
     //     Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
     //     Command{"alarm", "light", json{{"alarm_in", "light"}}}
@@ -91,7 +91,7 @@ int main() {
     actions->addAction(act_set2);
 
     // Link trigger "in1" to action "act_set2"
-    EventCommandLink link;
+    EventActionLink link;
     link.evn_key = gpio_in1->evnKey();
     link.action = "act_set2";
     actions->addLink(link);

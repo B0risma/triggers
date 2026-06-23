@@ -59,11 +59,11 @@ timeout - for single-shots (not implemented now)
 
 BETTER_ENUM(AnaliticCmdType, uint8_t, toggle);
 struct AnaliticCmd : public Rule{
-    AnaliticCmd(string detector,  bool state = true){
+    AnaliticCmd(string detector){
         type = RuleType::Analitic;
         data["subtype"] = AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
         data["detector"] = detector;
-        data["state"] = state;
+        // data["state"] = state;
     }
 
     string detector() const{
@@ -75,13 +75,13 @@ struct AnaliticCmd : public Rule{
 
     bool fillEventData(const Event &evn){
         auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
-        if(s_type == AnaliticCmdType::toggle){
-            data["state"] = evn.data.at("state");
-        }
+        // if(s_type == AnaliticCmdType::toggle){
+        //     data["state"] = evn.data.at("state");
+        // }
         // else if(false){
         //     some types
         // }
-        else return false;
+        // else return false;
 
         return true;
     }
@@ -117,19 +117,19 @@ struct AlarmCmd final : public Rule{
         data["subtype"] = subtype._to_string();
         if(subtype._value == AlarmCmdSubtype::Toggle){
             if(type._value == AlarmCmdType::Sound) throw logic_error("Sound cmd is single-shot only");
-            data["state"] = state;
+            // data["state"] = state;
         }
     }
 
     bool fillEventData(const Event &evn){
         auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
-        if(s_type == AnaliticCmdType::toggle){
-            data["state"] = evn.data.at("state");
-        }
-        // else if(false){
-        //     some types
+        // if(s_type == AnaliticCmdType::toggle){
+        //     data["state"] = evn.data.at("state");
         // }
-        else return false;
+        // // else if(false){
+        // //     some types
+        // // }
+        // else return false;
 
         return true;
     }
@@ -164,7 +164,7 @@ standart field types
 }
 */
 // get range for command and command types
-struct CommandRange{
+struct RuleRange{
     // cmd type
     static json getTypes(){
         json ret;
@@ -179,7 +179,7 @@ struct CommandRange{
         // enumerate type args
         ret[(+RuleType::Analitic)._to_string()] = {
             {"subtype",{(+AnaliticCmdType::toggle)._to_string()}},
-            {"fields", {"detector", "state"}
+            {"fields", {"detector"}
             },
         };
 
@@ -205,7 +205,7 @@ struct CommandRange{
                 tmp["subtype"] = tmp_array;
             }
             tmp["fields"] = {
-                {(+AlarmCmdSubtype::Toggle)._to_string(), {"state"}}, 
+                {(+AlarmCmdSubtype::Toggle)._to_string(), {}}, 
                 {(+AlarmCmdSubtype::SingleShot)._to_string(), {"timeout"}}
             };
 

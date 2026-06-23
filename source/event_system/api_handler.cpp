@@ -1,5 +1,5 @@
 #include "api_handler.hpp"
-#include "event_system/command.hpp"
+#include "event_system/rule.hpp"
 #include <exception>
 #include <functional>
 
@@ -87,7 +87,7 @@ void APIHandler::handleTargetList(const httplib::Request& req, httplib::Response
 void APIHandler::handleActionList(const httplib::Request& req, httplib::Response& res) {
     try {
         if(req.has_param("range")){
-            res.set_content(CommandRange::getTypes().dump(), json_content);
+            res.set_content(RuleRange::getTypes().dump(), json_content);
             return;
         }
         
@@ -151,7 +151,7 @@ void APIHandler::handleLinkList(const httplib::Request& req, httplib::Response& 
 void APIHandler::handleLinkCreate(const httplib::Request& req, httplib::Response& res) {
     try {
         auto j = json::parse(req.body);
-        auto link = EventCommandLink::fromJson(j);
+        auto link = EventActionLink::fromJson(j);
         if (actions_) {
             actions_->addLink(link);
             res.set_content(json{{"status", "linked"}, {"Source", link.evn_key}, {"action", link.action}}.dump(), json_content);

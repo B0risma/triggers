@@ -4,10 +4,10 @@
 #include <string>
 #include <iostream>
 #include <functional>
-#include "event_system/command.hpp"
+#include "rule.hpp"
 #include "json.hpp"
 #include "target.hpp"
-#include "command.hpp"
+#include "rule.hpp"
 #include "event.hpp"
 
 using json = nlohmann::json;

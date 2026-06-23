@@ -15,7 +15,7 @@ add_executable(server_v2 ${CMAKE_SOURCE_DIR}/source/main_v2.cpp
     source/event_system/event_queue.cpp
     source/event_system/trigger.cpp
     source/event_system/api_handler.cpp
-    source/event_system/command.cpp)
+    source/event_system/rule.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 include_directories(${CMAKE_SOURCE_DIR}/source)

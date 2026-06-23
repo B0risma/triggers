@@ -6,7 +6,7 @@
 #include <iostream>
 #include "json.hpp"
 #include "event.hpp"
-#include "command.hpp"
+#include "rule.hpp"
 // #include "v2.h"
 
 using json = nlohmann::json;
@@ -17,27 +17,28 @@ using namespace std;
 /// are sent to the EventQueue for processing by targets.
 /// Actions ARE editable via webAPI (POST create, DELETE remove).
 struct Action {
+    static constexpr auto rules_f = "rules";
     string name;            ///< Action identifier (e.g. "act_set2")
-    vector<Rule> cmds;     ///< Set of events to send when action is triggered
+    vector<Rule> rules;     ///< Set of events to send when action is triggered
 
     json toJson() const {
         json j;
         j["name"] = name;
         json cmds_j = json::array();
-        for (const auto& cmd : cmds) {
+        for (const auto& cmd : rules) {
             cmds_j.push_back(cmd.toJson());
         }
-        j["cmds"] = cmds_j;
+        j[rules_f] = cmds_j;
         return j;
     }
 
     static Action fromJson(const json& j) noexcept(false){
         Action a;
         a.name = j.at("name");
-        const auto& cmds = j.at("cmds");
-        if(!cmds.is_array() || cmds.empty()) throw logic_error("empty cmds");
-        for (const auto& cmd_j : j["cmds"]) {
-            a.cmds.push_back(Rule::fromJson(cmd_j).value());
+        const auto& rules = j.at(rules_f);
+        if(!rules.is_array() || rules.empty()) throw logic_error("empty rules");
+        for (const auto& cmd_j : rules) {
+            a.rules.push_back(Rule::fromJson(cmd_j).value());
         }
         return a;
     }
@@ -46,26 +47,28 @@ struct Action {
 /// Trigger-Action link: associates a trigger with an action,
 /// optionally with conditions for emitting.
 // bind trigger events to actions
-struct EventCommandLink {
+struct EventActionLink {
+    static constexpr auto evn_key_f = "event";
+    static constexpr auto action_f = "action";
     string evn_key;     ///< Trigger name
     string action;      ///< Action name
     // for what?
-    // string condition;   ///< Optional precondition for emitting
+    // string condition;   ///< Optional precondition for emitting moved into target as Event arguments
 
     json toJson() const {
         json j;
-        j["evn_key"] = evn_key;
-        j["action"] = action;
+        j[evn_key_f] = evn_key;
+        j[action_f] = action;
         // if (!condition.empty()) {
             // j["condition"] = condition;
         // }
         return j;
     }
 
-    static EventCommandLink fromJson(const json& j) {
-        EventCommandLink link;
-        link.evn_key = j.at("evn_key");
-        link.action = j.at("action");
+    static EventActionLink fromJson(const json& j) {
+        EventActionLink link;
+        link.evn_key = j.at(evn_key_f);
+        link.action = j.at(action_f);
         // link.condition = j.value("condition", "");
         return link;
     }
@@ -81,6 +84,7 @@ struct EventCommandLink {
 /// Editable via webAPI (POST create action, POST link trigger to action).
 class ActionList {
 public:
+    using link_key_t = string;
     /// Create a new action. Throws if name already exists.
     void addAction(const Action& action) {
         if (actions_.count(action.name)) {
@@ -111,14 +115,14 @@ public:
     }
 
     /// Link a trigger to an action
-    void addLink(const EventCommandLink& link) {
+    void addLink(const EventActionLink& link) {
         // string key = ;
         links_[link.key()] = link;
     }
 
     /// Remove a trigger-action link
     void removeLink(const string& evn_key, const string& action) {
-        string key = EventCommandLink::linkKey(evn_key,action);
+        string key = EventActionLink::linkKey(evn_key,action);
         links_.erase(key);
     }
 
@@ -136,19 +140,6 @@ public:
         return res;
     }
 
-    /// Get all actions linked to a given trigger name
-    // vector<const Action*> getActionsForTrigger(const string& trigger_name) const {
-    //     vector<const Action*> result;
-    //     for (const auto& [key, link] : links_) {
-    //         if (link.EnvKey == trigger_name) {
-    //             auto it = actions_.find(link.action);
-    //             if (it != actions_.end()) {
-    //                 result.push_back(&it->second);
-    //             }
-    //         }
-    //     }
-    //     return result;
-    // }
 
     /// Get all actions
     const unordered_map<string, Action>& allActions() const {
@@ -156,7 +147,7 @@ public:
     }
 
     /// Get all links
-    const unordered_map<string, EventCommandLink>& allLinks() const {
+    const unordered_map<string, EventActionLink>& allLinks() const {
         return links_;
     }
 
@@ -180,5 +171,5 @@ public:
 
 private:
     unordered_map<string, Action> actions_; //all actions
-    unordered_map<string, EventCommandLink> links_; // store actions for targets // by event keys
+    unordered_map<link_key_t, EventActionLink> links_; // store actions for targets // by event keys
 };

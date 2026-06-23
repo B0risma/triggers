@@ -21,7 +21,7 @@ class EventQueue;
 class Trigger {
 public:
     string name;        ///< Trigger identifier (e.g. "gpio_in1")
-    string kind;        ///< Trigger kind/category (e.g. "gpio", "analitics", "shedule")
+    EventType evn_type = EventType::NoType;        ///< Trigger kind/category (e.g. "gpio", "analitics", "shedule")
 
     virtual ~Trigger() = default;
 
@@ -44,7 +44,7 @@ public:
     //     };
     // }
     string evnKey() const{
-        return kind +":"+name;
+        return evn_type._to_string() +":"s+name;
     }
 protected:
     weak_ptr<EventQueue> e_queue;
@@ -61,14 +61,14 @@ public:
     void add(Ptr trigger) {
         if (!trigger) return;
         triggers_[trigger->name] = trigger;
-        by_kind_[trigger->kind].push_back(trigger);
+        by_kind_[trigger->evn_type._to_string()].push_back(trigger);
     }
 
     /// Remove a trigger by name
     void remove(const string& name) {
         auto it = triggers_.find(name);
         if (it != triggers_.end()) {
-            auto& list = by_kind_[it->second->kind];
+            auto& list = by_kind_[it->second->evn_type._to_string()];
             std::erase(list, it->second);
             triggers_.erase(it);
         }

@@ -18,7 +18,6 @@ using namespace std;
 /// Simulates GPIO input pin — when state changes, it emits an event
 /// into the EventQueue for processing by linked targets/actions.
 class GPIOTrigger : public Trigger {
-    static constexpr auto gpio_kind = "GPIO";
 public:
     /// Pin identifier (e.g. "in1", "in2")
     string pin_id;
@@ -29,10 +28,10 @@ public:
     GPIOTrigger(const string& pin)
         : pin_id(pin) {
         name = pin_id;
-        kind = gpio_kind;
+        evn_type = EventType::GPIO;
     }
     virtual Event createEvent(bool new_state)const {
-        return GPIOEvent(pin_id, new_state);
+        return GPIOEvent(evnKey(), new_state);
     }
     /// Simulate a state change on the GPIO pin.
     /// When state changes, emit an event into the queue.
@@ -100,10 +99,10 @@ struct Vswitch : public GPIOTrigger{
     GPIOTrigger(pin_name){
         pin_id = pin_name;
         name = pin_name;
-        kind = "vswitch";
+        evn_type = EventType::VirtSwitch;
     }
     virtual Event createEvent(bool new_state)const override{
-        return VswitchEvent(pin_id, new_state);
+        return VswitchEvent(evnKey(), new_state);
     }
 
 };

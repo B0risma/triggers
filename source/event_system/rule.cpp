@@ -1,4 +1,4 @@
-#include "command.hpp"
+#include "rule.hpp"
 #include <exception>
 #include <stdexcept>
 #include <iostream>
@@ -12,7 +12,7 @@ std::optional<Rule> Rule::fromJson(const json& j) noexcept{
         const auto type = RuleType::_from_string(j.at("type").get_ref<const string&>().c_str());
         switch(type._value){
             case RuleType::Analitic: {
-                tmp = AnaliticCmd(j.at("detector"), j.at("state"));
+                tmp = AnaliticCmd(j.at("detector"));
                 break;
             }
             case RuleType::Alarm: {

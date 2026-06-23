@@ -10,7 +10,7 @@
         - Del - V
         - List - V
         - Range - ? how to do it?
-    - Action links (circuit\link) - V\X - need updating
+    - Action links (circuit\link) - V - need updating
  - Integration () - X
     - product based events
     - real commands
@@ -22,9 +22,8 @@
 ### todo  
 
 1.  Complete API 
-    - rework Action linkage with events
     - Action range - LATER
     - make supported rule type list (as rule key or just rule type == target type)
-    
+1. Strict trigger (event) type types (trigger key as event key)
 1. Tests 
 1. Final integration
