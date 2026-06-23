@@ -88,10 +88,6 @@ public:
         // stopSimulation();
     }
 
-    string evnKey(){
-        return kind +":"+pin_id;
-    }
-
 private:
     // atomic<bool> sim_running_{false};
     // thread sim_thread_;
@@ -104,6 +100,7 @@ struct Vswitch : public GPIOTrigger{
     GPIOTrigger(pin_name){
         pin_id = pin_name;
         name = pin_name;
+        kind = "vswitch";
     }
     virtual Event createEvent(bool new_state)const override{
         return VswitchEvent(pin_id, new_state);

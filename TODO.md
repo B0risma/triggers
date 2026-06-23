@@ -2,7 +2,7 @@
 
 ### Needs  
  - API
-    - trigger list (event sources) - V\X
+    - trigger list (event sources) - V
     - Target list (relised as Command range) - V
     - Command ctrl (as action sublist) - V
     - Actions
@@ -22,7 +22,6 @@
 ### todo  
 
 1.  Complete API 
-    - trigger list - as event source (by types or only as "event key"s)
     - rework Action linkage with events
     - Action range - LATER
     - make supported rule type list (as rule key or just rule type == target type)

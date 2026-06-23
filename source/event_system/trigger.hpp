@@ -43,6 +43,9 @@ public:
     //         {"kind", kind}
     //     };
     // }
+    string evnKey() const{
+        return kind +":"+name;
+    }
 protected:
     weak_ptr<EventQueue> e_queue;
 };
@@ -96,7 +99,7 @@ public:
         for (const auto& [kind, trigs] : by_kind_) {
             json subtypes = json::array();
             for (const auto& t : trigs) {
-                subtypes.push_back(t->name);
+                subtypes.push_back(json{{"name",t->name}, {"event", t->evnKey()}});
             }
             j[kind] = subtypes;
         }

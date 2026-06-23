@@ -28,6 +28,7 @@ int main() {
     auto queue     = make_shared<EventQueue>();
     auto switches = make_shared<VswitchList>();
     switches->que = queue;
+    switches->trgList = triggers;
 
     // --- 2. Wire up the EventQueue with registries ---
     queue->setRegistries(targets, triggers, actions);
