@@ -1,4 +1,5 @@
 #include "rule.hpp"
+#include "event_system/event.hpp"
 #include <exception>
 #include <stdexcept>
 #include <iostream>
@@ -11,6 +12,11 @@ std::optional<Rule> Rule::fromJson(const json& j) noexcept{
         Rule tmp;
         const auto type = RuleType::_from_string(j.at("type").get_ref<const string&>().c_str());
         switch(type._value){
+            case RuleType::Invalid:{
+                cout << __PRETTY_FUNCTION__ << "WARN: test only\n";
+                tmp = Rule();
+                break;
+            }
             case RuleType::Analitic: {
                 tmp = AnaliticCmd(j.at("detector"));
                 break;

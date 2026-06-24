@@ -17,6 +17,10 @@
 
  - tests - X
     - moc tests - X
+     - adding triggers (some triggers)
+     - creating actions with commands
+     - link 
+     - event 
     - vswitch - V
 
 ### todo  

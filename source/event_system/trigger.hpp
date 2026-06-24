@@ -20,6 +20,7 @@ class EventQueue;
 /// Triggers are NOT editable by webAPI.
 class Trigger {
 public:
+using Ptr = shared_ptr<Trigger>;
     string name;        ///< Trigger identifier (e.g. "gpio_in1")
     EventType evn_type = EventType::NoType;        ///< Trigger kind/category (e.g. "gpio", "analitics", "shedule")
 
@@ -55,11 +56,12 @@ protected:
 /// Provides trigger kind listing (matches API2.json GET trigger list).
 class TriggerList {
 public:
-    using Ptr = shared_ptr<Trigger>;
-
     /// Add a trigger to the registry
-    void add(Ptr trigger) {
+    void add(Trigger::Ptr trigger) {
         if (!trigger) return;
+        if(que.lock()){
+            trigger->setEventQueue(que.lock());
+        }
         triggers_[trigger->name] = trigger;
         by_kind_[trigger->evn_type._to_string()].push_back(trigger);
     }
@@ -75,20 +77,20 @@ public:
     }
 
     /// Find a trigger by name
-    Ptr find(const string& name) const {
+    Trigger::Ptr find(const string& name) const {
         auto it = triggers_.find(name);
         return it != triggers_.end() ? it->second : nullptr;
     }
 
     /// Get triggers by kind
-    const vector<Ptr>& byKind(const string& kind) const {
-        static const vector<Ptr> empty;
+    const vector<Trigger::Ptr>& byKind(const string& kind) const {
+        static const vector<Trigger::Ptr> empty;
         auto it = by_kind_.find(kind);
         return it != by_kind_.end() ? it->second : empty;
     }
 
     /// Get all triggers
-    const unordered_map<string, Ptr>& all() const {
+    const unordered_map<string, Trigger::Ptr>& all() const {
         return triggers_;
     }
 
@@ -106,7 +108,16 @@ public:
         return j;
     }
 
+    void clean(){
+        triggers_.clear();
+        by_kind_.clear();
+    }
+    void setEventQueue(shared_ptr<EventQueue> q){
+        que = q;
+    }
 private:
-    unordered_map<string, Ptr> triggers_;
-    unordered_map<string, vector<Ptr>> by_kind_;
+//TODO use weak_ptrs!!
+    unordered_map<string, Trigger::Ptr> triggers_;
+    unordered_map<string, vector<Trigger::Ptr>> by_kind_;
+    weak_ptr<EventQueue> que = {};
 };

@@ -1,10 +1,15 @@
+#include "event_system/event.hpp"
 #include "event_system/rule.hpp"
 #include "httplib.h"
 #include "json.hpp"
+#include <cstdlib>
+#include <exception>
 #include <memory>
 #include <iostream>
 #include <chrono>
+#include <system_error>
 #include <thread>
+#include <tuple>
 
 #include "event_system/event_queue.hpp"
 #include "event_system/target.hpp"
@@ -18,20 +23,140 @@ using namespace std;
 using namespace std::string_literals;
 using json = nlohmann::json;
 
-int main() {
-    cout << "=== Event System V2 ===\n\n";
 
-    // --- 1. Create registries ---
-    auto targets   = make_shared<TargetList>();
-    auto triggers  = make_shared<TriggerList>();
-    auto actions   = make_shared<ActionList>();
-    auto queue     = make_shared<EventQueue>();
+std::tuple<shared_ptr<EventQueue>, shared_ptr<ActionList>, shared_ptr<TriggerList>> core = {};
+void initCore(){
+    static atomic_bool inited = {false};
+    if(inited) return;
+    core = {make_shared<EventQueue>(), make_shared<ActionList>(), make_shared<TriggerList>()};
+
+    auto queue = std::get<0>(core);
+    auto actions = std::get<1>(core);
+    auto triggers = std::get<2>(core);
+    queue->setRegistries(triggers, actions);
+    inited = true;
+}
+auto trigList(){
+    return std::get<2>(core);
+}
+auto testTriggers(){
+    auto trg_list = trigList();
+    auto tup = tuple(make_shared<GPIOTrigger> ("pin1"), make_shared<Vswitch>("switch1"), make_shared<SheduleTrigger>("shed1"));
+    const auto& [in1, sw1, sh1] = tup;
+    trg_list->add(in1);
+    trg_list->add(sw1);
+    trg_list->add(sh1);
+    return tup;
+}
+
+void triggerTest(){
+    cout << __PRETTY_FUNCTION__ << endl;
+    try{
+    auto trg_list = std::get<2>(core);
+    auto test_trigs = testTriggers();
+    {
+        for(auto i : {EventType::GPIO, EventType::VirtSwitch, EventType::Shedule}){
+            auto v = trg_list->byKind((+i)._to_string());
+            if(v.empty()) 
+            {
+                cout << "ERROR: " << __PRETTY_FUNCTION__ << endl;
+                std::abort();
+            }
+        }
+    }
+    trg_list->clean();
+    }
+    catch(const std::exception& ex){
+        cout << __PRETTY_FUNCTION__ << " " << ex.what() << endl;
+    }
+}
+
+void testEvents(){
+    cout << __PRETTY_FUNCTION__ << endl;
+    auto [in1, sw1, sh1] = testTriggers();
+    
+    {
+        sh1->start = std::chrono::system_clock::now();
+        sh1->stop = sh1->start + chrono::seconds(10);
+    }
+    {
+        // no event
+        cout << "NO EVENTS\n";
+        in1->setState(false);
+        sw1->setState(false);
+        sh1->checkTime(sh1->start - chrono::seconds(5));
+        sh1->checkTime(sh1->start + chrono::seconds(15));
+        cout << "END\n";
+    }
+    class EventCntr : public Target{
+    public:
+        EventCntr(){
+            name = "EventCntr";
+            supported_rules = {(+RuleType::Invalid)._to_string()};
+        }
+        int evn_cnt = 0;
+        void procEvent(const Command &evn) override{\
+            Target::procEvent(evn);
+            evn_cnt++;
+        }
+    };
+
+   {
+        auto cntr = make_shared<EventCntr>();
+        auto que = get<0>(core);
+        que->subscribeTarget(cntr);
+
+        auto act_list = get<1>(core);
+        {
+            json act_j;
+            act_j["name"] = "test";
+            act_j[Action::rules_f] = {{{"type",(+RuleType::Invalid)._to_string()}}};
+            cout << act_j.dump(1) << endl;
+            act_list->addAction(Action::fromJson(act_j));
+        }
+        {
+            EventActionLink ln;
+            ln.action = "test";
+            ln.evn_key = in1->evnKey();
+            act_list->addLink(ln);
+
+            ln.evn_key = sw1->evnKey();
+            act_list->addLink(ln);
+
+            ln.evn_key = sh1->evnKey();
+            act_list->addLink(ln);
+        }
+        
+        // switch event
+        cout << "EVENTS\n";
+        in1->setState(true);
+        sw1->setState(true);
+        sh1->checkTime(sh1->start + chrono::seconds(5));
+        cout << "END\n";
+        if(cntr->evn_cnt != 3){
+            cout <<  __func__ << " bad events\n";
+            abort();
+        }
+    }
+    trigList()->clean();
+}
+
+int main() {
+    initCore();
+    auto queue = std::get<0>(core);
+    auto actions = std::get<1>(core);
+    auto triggers = std::get<2>(core);
+
+
+    triggerTest();
+    testEvents();
+    return 0;
+
     auto switches = make_shared<VswitchList>();
     switches->que = queue;
     switches->trgList = triggers;
 
-    // --- 2. Wire up the EventQueue with registries ---
-    queue->setRegistries(targets, triggers, actions);
+    
 
     // --- 3. Create and register Trigger examples ---
     // GPIO triggers: pins "in1" and "in2"
@@ -54,7 +179,7 @@ int main() {
 
     // --- 6. Set up API handler ---
     APIHandler api;
-    api.setRegistries(targets, triggers, actions, queue, switches);
+    api.setRegistries({},triggers, actions, queue, switches);
 
     httplib::Server srv;
     api.registerRoutes(srv);

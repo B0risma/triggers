@@ -49,47 +49,8 @@ public:
         return state.load();
     }
 
-    /// Descriptor for trigger listing
-    // json getDescriptor() const override {
-    //     return json{
-    //         {"name", name},
-    //         {"kind", kind},
-    //         {"pin", pin_id},
-    //         {"state", state.load()}
-    //     };
-    // }
-
-    // /// Start periodic state simulation (for demo/testing).
-    // /// Alternates state every `interval_ms` milliseconds.
-    // void startSimulation(int interval_ms = 2000) {
-    //     sim_running_ = true;
-    //     sim_thread_ = thread([this, interval_ms]() {
-    //         bool cur = state.load();
-    //         while (sim_running_.load()) {
-    //             cur = !cur;
-    //             setState(cur);
-    //             this_thread::sleep_for(chrono::milliseconds(interval_ms));
-    //         }
-    //     });
-    //     cout << "GPIOTrigger: simulation started for pin '" << pin_id << "'\n";
-    // }
-
-    /// Stop the simulation
-    // void stopSimulation() {
-    //     sim_running_ = false;
-    //     if (sim_thread_.joinable()) {
-    //         sim_thread_.join();
-    //     }
-    //     cout << "GPIOTrigger: simulation stopped for pin '" << pin_id << "'\n";
-    // }
-
     ~GPIOTrigger() override {
-        // stopSimulation();
     }
-
-private:
-    // atomic<bool> sim_running_{false};
-    // thread sim_thread_;
 };
 
 
@@ -139,4 +100,40 @@ struct VswitchList{
         }
     }
 
+};
+
+struct SheduleTrigger : public Trigger{
+    SheduleTrigger(const string &sh_name){
+        evn_type = EventType::Shedule;
+        name = sh_name;
+    }
+    using tp_t = std::chrono::system_clock::time_point;
+    std::chrono::system_clock::time_point start = {};;
+    std::chrono::system_clock::time_point stop = {};
+   
+
+    void checkTime(const tp_t tp){
+        if(tp > start && tp < stop){
+            setState(true);    
+        }
+        else{
+            setState(false);
+        }
+    }
+
+private:
+    void setState(bool state){
+        if(state == last_state){
+            return;
+        }
+
+        last_state = state;
+
+        Event evn(evnKey());
+        evn.type = EventType::Shedule;
+        evn.data["active_p"] = state; //in_period
+
+        emitEvent(std::move(evn));
+    }    
+    bool last_state = false;
 };

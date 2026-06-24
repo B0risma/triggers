@@ -30,12 +30,12 @@ public:
 
     /// Initialize with system registries
     void setRegistries(
-        shared_ptr<TargetList> targets,
         shared_ptr<TriggerList> triggers,
         shared_ptr<ActionList> actions
     ) {
-        targets_ = targets;
+        targets_ = make_shared<TargetList>();
         triggers_ = triggers;
+        triggers->setEventQueue(shared_from_this());
         actions_ = actions;
     }
 
