@@ -25,6 +25,7 @@
 
 ### todo  
 
+1. Targets dont subscribe to queue after addition to TargetList - (use target list only inside queue and add targets with queue) OR ( use external targ list and auto subcribe while addition) AND NO API for target list
 1.  Complete API 
     - Action range - LATER
     - make supported rule type list (as rule key or just rule type == target type)
