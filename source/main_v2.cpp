@@ -92,7 +92,7 @@ void testEvents(){
     public:
         EventCntr(){
             name = "EventCntr";
-            supported_rules = {(+RuleType::Invalid)._to_string()};
+            supported_rules =  {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
         }
         int evn_cnt = 0;
         void procEvent(const Command &evn) override{\
@@ -110,7 +110,8 @@ void testEvents(){
         {
             json act_j;
             act_j["name"] = "test";
-            act_j[Action::rules_f] = {{{"type",(+RuleType::Invalid)._to_string()}}};
+            act_j[Action::rules_f] = {{{"type",(+RuleType::Toggle)._to_string()},
+                                    {"target",(+TargetType::Invalid)._to_string()}}};
             cout << act_j.dump(1) << endl;
             act_list->addAction(Action::fromJson(act_j));
         }
@@ -148,9 +149,9 @@ int main() {
     auto triggers = std::get<2>(core);
 
 
-    triggerTest();
-    testEvents();
-    return 0;
+    // triggerTest();
+    // testEvents();
+    // return 0;
 
     auto switches = make_shared<VswitchList>();
     switches->que = queue;
@@ -208,7 +209,7 @@ int main() {
     // Create an action with a fire detector command and an alarm command
     Action act_set2;
     act_set2.name = "act_set2";
-    act_set2.rules = {AnaliticCmd("Fire")};
+    act_set2.rules = {AnaliticCmd(TargetType::Analitic, "Fire")};
     // act_set2.cmds = {
     //     Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
     //     Command{"alarm", "light", json{{"alarm_in", "light"}}}

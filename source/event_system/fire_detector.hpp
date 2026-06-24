@@ -96,7 +96,7 @@ public:
     : Detector(instance_name){
         // type_name = "fire_detector";
         // Subscribe to analitics:fire events
-        auto rule_key = Rule::ruleKey(RuleType(RuleType::Analitic), DetectorType(DetectorType::Fire)._to_string());
+        auto rule_key = Rule::ruleKey(RuleType::Toggle,TargetType::Analitic);
         supported_rules = {std::move(rule_key)};
     }
 
@@ -108,7 +108,7 @@ public:
 
         const auto& rule = cmd.first;
         const auto& evn = cmd.second;
-        if(rule.type._value != RuleType::Analitic){
+        if(rule.target._value != TargetType::Analitic){
             cout << __PRETTY_FUNCTION__ << " skip cmd: " << rule.toString() << endl;
             return;
         }
@@ -120,8 +120,8 @@ public:
         }
 
         try{
-            auto s_type = ai_cmd.subtype()._value;
-            if(s_type == AnaliticCmdType::toggle){
+            // auto s_type = ai_cmd.subtype()._value;
+            if(ai_cmd.type._value == RuleType::Toggle){
                 evn.data.at("state");
                 setEnabled(evn.data.at("state"));    
             }
@@ -139,7 +139,7 @@ public:
     : Detector(instance_name){
         // type_name = "weapon_detector";
         // Subscribe to analitics:fire events
-        auto rule_key = Rule::ruleKey(RuleType(RuleType::Analitic), DetectorType(DetectorType::Weapon)._to_string());
+        auto rule_key = Rule::ruleKey(RuleType::Toggle, TargetType::Analitic);
         supported_rules = {std::move(rule_key)};
     }
 
@@ -151,7 +151,7 @@ public:
         cout << "WeaponDetector '" << name << "': received event "
              << evn.toString() << endl;
 
-        if(rule.type._value != RuleType::Analitic){
+        if(rule.target._value != TargetType::Analitic){
             cout << __PRETTY_FUNCTION__ << " sckip cmd: " << rule.toString() << endl;
             return;
         }
@@ -163,8 +163,8 @@ public:
         }
 
         try{
-            auto s_type = ai_cmd.subtype()._value;
-            if(s_type == AnaliticCmdType::toggle){
+            // auto s_type = ai_cmd.subtype()._value;
+            if(ai_cmd.type._value == RuleType::Toggle){
                 evn.data.at("state");
                 setEnabled(evn.data.at("state"));    
             }
