@@ -186,7 +186,7 @@ int main() {
     api.registerRoutes(srv);
 
     constexpr int port = 8080;
-    constexpr auto addr = "localhost";
+    constexpr auto addr = "127.0.0.1";
 
     cout << "\nServer listen on http://" << addr << ":" << port << "\n";
     cout << "API endpoints:\n";
@@ -236,6 +236,7 @@ int main() {
 
     cout << "\nStarting HTTP server...\n";
     srv.listen(addr, port);
+    
 
     // Cleanup on exit
     queue->stop();
