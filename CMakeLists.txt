@@ -24,3 +24,10 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/3rdparty/httplib)
 
 # target_link_libraries(server httplib)
 target_link_libraries(server_v2 httplib)
+
+# Test target
+add_executable(tests ${CMAKE_SOURCE_DIR}/source/tests.cpp
+    source/event_system/event_queue.cpp
+    source/event_system/trigger.cpp
+    source/event_system/rule.cpp)
+target_link_libraries(tests httplib)
