@@ -129,7 +129,7 @@ void test_rule_creation() {
         json j = {
             {"rule_type", "Toggle"},
             {"target_type", "Alarm"},
-            {"target", "Light"}
+            {"target", "WhiteLight"}
         };
         auto opt = Rule::fromJson(j);
         ASSERT(opt.has_value(), "fromJson should return valid Rule");
@@ -140,8 +140,8 @@ void test_rule_creation() {
         json j = {
             {"rule_type", "Toggle"},
             {"target_type", "Video"},
-            {"preset_on", 3},
-            {"preset_off", 7}
+            {"preset_on", "3"},
+            {"preset_off", "7"}
         };
         auto opt = Rule::fromJson(j);
         ASSERT(opt.has_value(), "fromJson should return valid Rule");
@@ -547,7 +547,7 @@ void test_fire_detector() {
         triggers->add(gt);
 
         EventActionLink link;
-        link.evn_key = "fd_trig";
+        link.evn_key = "GPIO:fd_trig";
         link.action = "fd_action";
         actions->addLink(link);
 
