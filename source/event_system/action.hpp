@@ -137,6 +137,7 @@ public:
                 }
             }
         }
+        if(res.empty()) cout << __PRETTY_FUNCTION__ << " DBG: " << "no actions for " << evn.toString() << endl;
         return res;
     }
 

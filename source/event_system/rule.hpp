@@ -37,7 +37,7 @@ struct Rule {
     RuleType type = RuleType::Toggle;      ///< Cmd type for target routing
     TargetType target_type = TargetType::Invalid;   ///< addition field for routing - not used now
     string target = {}; //empty by default
-    json data;        ///< type specific data arguments: detector name for Analitics, preset for Video ...
+    json data = json::object();        ///< type specific data arguments: detector name for Analitics, preset for Video ...
 
     string toString() const {
         return  target_type._to_string() + key_delimiter + 
@@ -93,7 +93,8 @@ struct AnaliticCmd final : public Rule{
 struct VideoCmd final : public Rule{
     VideoCmd(){
         type = RuleType::Preset;
-        target = TargetType::Video;
+        target_type = TargetType::Video;
+        target = "";
         // data["subtype"] = "Preset"; //?!
         data["preset_on"] = "preset1";
         data["preset_off"] = "preset2";
@@ -112,6 +113,7 @@ BETTER_ENUM(AlarmTarget, uint8_t, Invalid = 0, Sound, WhiteLight, RedBlue);///..
 struct AlarmCmd final : public Rule{
     AlarmCmd(const AlarmTarget alarm_type, RuleType type_){
         type = type_;
+        target_type = TargetType::Alarm;
         if(type._value == RuleType::Toggle){
             if(alarm_type == (+AlarmTarget::Sound)) throw logic_error("Sound cmd is single-shot only");
         }

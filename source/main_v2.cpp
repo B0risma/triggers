@@ -149,9 +149,9 @@ int main() {
     auto triggers = std::get<2>(core);
 
 
-    triggerTest();
-    testEvents();
-    return 0;
+    // triggerTest();
+    // testEvents();
+    // return 0;
 
     auto switches = make_shared<VswitchList>();
     switches->que = queue;

@@ -13,7 +13,6 @@ BETTER_ENUM(EventType, uint8_t, NoType=0, GPIO=1, VirtSwitch, Analitic, Shedule)
 
 
 /// Core event data structure.
-/// Matches API2.json format: {"type":"analitics", "source":"fire", "data":{...}}
 /// Event is also a "command" — data for processing an action.
 struct Event {
     //maybe int
@@ -27,23 +26,14 @@ struct Event {
         return src_key + "|" + data.dump();
     }
 
-    json toJson() const {
-        return json{
-            {"type", type._to_string()},
-            {"source", src_key},
-            {"data", data}
-        };
-    }
-
-    // static Event fromJson(const json& j) {
-    //     Event e;
-    //     e.type._from_string_nothrow(string(j.at("type")).c_str());
-    //     e.src_key = j.value("source", "");
-    //     e.data = j.value("data", json::object());
-    //     return e;
+    // json toJson() const {
+    //     return json{
+    //         {"type", type._to_string()},
+    //         {"source", src_key},
+    //         {"data", data}
+    //     };
     // }
 
-    /// Composite key for routing: type+source
     string key() const {
         return src_key;
     }
