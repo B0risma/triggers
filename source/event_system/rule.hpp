@@ -10,7 +10,7 @@
 using json = nlohmann::json;
 using namespace std;
 
-BETTER_ENUM(TargetType, uint8_t, Invalid = 0, Video, Analitic, AnaliticFire, AnaliticWeapon, Alarm, WhiteLight, RedBlue, Sound); //.....
+BETTER_ENUM(TargetType, uint8_t, Invalid = 0, Video, Analitic, Alarm); //.....
 BETTER_ENUM(RuleType, uint8_t, Toggle, OneShot, Number, Preset);//...
 //Command to process
 /// Core Command structure
@@ -23,20 +23,40 @@ BETTER_ENUM(RuleType, uint8_t, Toggle, OneShot, Number, Preset);//...
 ...
 }
 */
-#pragma message("these are cmd TEMPLATES!!! not ready to invoke cmd - no data!!!")
+//! As like as Command temmplate - rule for executing something
 struct Rule {
+    static constexpr const string key_delimiter = ":";
+
+    struct Fields {
+        static constexpr auto rule_type = "rule_type";
+        static constexpr auto target_type = "target_type";
+        static constexpr auto target = "target";
+    };
+
+
     RuleType type = RuleType::Toggle;      ///< Cmd type for target routing
-    TargetType target = TargetType::Invalid;   ///< addition field for routing - not used now
+    TargetType target_type = TargetType::Invalid;   ///< addition field for routing - not used now
+    string target = {}; //empty by default
     json data;        ///< type specific data arguments: detector name for Analitics, preset for Video ...
 
     string toString() const {
-        return  target._to_string() + "|"s + string(type._to_string()) + "|" + data.dump();
+        return  target_type._to_string() + key_delimiter + 
+                target + key_delimiter + 
+                string(type._to_string()) + 
+                key_delimiter + data.dump();
     }
+    /*
+    standart "data" fields:
+    type - cmd type(mode/what to do): toggle, single shot, preset....
+    target_type - for what handler
+    Target - detailed handler
 
+    */
     json toJson() const {
         json tmp{
-            {"type", type._to_string()},
-            {"target", target._to_string()},
+            {Fields::rule_type, type._to_string()},
+            {Fields::target, target},
+            {Fields::target_type, target_type._to_string()}
         };
         tmp.update(data, true);
         return tmp;
@@ -46,51 +66,28 @@ struct Rule {
 
     /// Composite key for routing: type+target
     string key() const {
-        return ruleKey(type, target);
+        return ruleKey(type, target_type, target);
     }
-    static string ruleKey(const RuleType& type, const TargetType& target){
-        return target._to_string() + ""s + type._to_string();
+    static string ruleKey(const RuleType& type, const TargetType& target_type, const string & target = {}){
+        return target_type._to_string() + key_delimiter + 
+                target + key_delimiter +
+                type._to_string();
     }
 };
 
-/*
-standart "data" fields:
-subtype - cmd type(mode/what to do): toggle, single shot, preset....
-state - for toggle command (boolean)
-timeout - for single-shots (not implemented now)
 
-*/
 
-// BETTER_ENUM(AnaliticCmdType, uint8_t, toggle);
-struct AnaliticCmd : public Rule{
-    AnaliticCmd(TargetType targ, string detector = {}){
+BETTER_ENUM(AnaliticTarget, uint8_t, All = 0, Fire, Weapon);///....
+struct AnaliticCmd final : public Rule{
+    AnaliticCmd(AnaliticTarget detector){
         type = RuleType::Toggle;
-        // data["subtype"] = AnaliticCmdType(AnaliticCmdType::toggle)._to_string();
-        if(!detector.empty())
-            data["detector"] = detector;
-        target = targ;
-        // data["state"] = state;
+        target_type = TargetType::Analitic;
+        target = detector._to_string();
     }
 
     string detector() const{
-        return data.value("detector", "");
+        return target;
     }
-    // AnaliticCmdType subtype() const{
-    //     return AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str());
-    // }
-
-    // bool fillEventData(const Event &evn){
-    //     // auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
-    //     // if(s_type == AnaliticCmdType::toggle){
-    //     //     data["state"] = evn.data.at("state");
-    //     // }
-    //     // else if(false){
-    //     //     some types
-    //     // }
-    //     // else return false;
-
-    //     return true;
-    // }
 };
 
 struct VideoCmd final : public Rule{
@@ -101,131 +98,100 @@ struct VideoCmd final : public Rule{
         data["preset_on"] = "preset1";
         data["preset_off"] = "preset2";
     }
-    // bool fillEventData(const Event &evn){
-    //     if(data.at("subtype") == "Preset"){
-    //         data["preset"] = evn.data.at("state") ? data.at("preset_on") : data.at("preset_off");
-    //     }
-    //     // else if(false){
-    //     //     some types
-    //     // }
-    //     else return false;
-
-    //     return true;
-    // }
+    inline void setPresetOn(const string &preset_name){
+        data["preset_on"] = preset_name;
+    }
+    inline void setPresetOff(const string &preset_name){
+        data["preset_off"] = preset_name;
+    }
 };
 
-// BETTER_ENUM(AlarmCmdType, uint8_t, WhiteLight, RedBlue, Sound);//.....
-// BETTER_ENUM(AlarmCmdSubtype, uint8_t, Toggle, SingleShot);
+
+BETTER_ENUM(AlarmTarget, uint8_t, Invalid = 0, Sound, WhiteLight, RedBlue);///....
 //single shot only
 struct AlarmCmd final : public Rule{
-    AlarmCmd(const TargetType alarm_type, RuleType type_){
+    AlarmCmd(const AlarmTarget alarm_type, RuleType type_){
         type = type_;
-        // target = alarm_type._to_string(); // rebblue, sound, ....
-        // data["subtype"] = subtype._to_string();
         if(type._value == RuleType::Toggle){
-            if(type._value == TargetType::Sound) throw logic_error("Sound cmd is single-shot only");
-            // data["state"] = state;
+            if(alarm_type == (+AlarmTarget::Sound)) throw logic_error("Sound cmd is single-shot only");
         }
+        target = alarm_type._to_string();
     }
-
-    // bool fillEventData(const Event &evn){
-    //     auto s_type = AnaliticCmdType::_from_string(data.at("subtype").get_ref<const string&>().c_str())._value;
-    //     // if(s_type == AnaliticCmdType::toggle){
-    //     //     data["state"] = evn.data.at("state");
-    //     // }
-    //     // // else if(false){
-    //     // //     some types
-    //     // // }
-    //     // else return false;
-
-    //     return true;
-    // }
 };
 
 
 
 /*
-standart range struct for CmdType
+standart range struct for Rules
 {
- "fields_type" : {}, //see below
- "types" : [], // command types list
-"CommandType1" : { //command type range 
-    "subtype" : [toggle,singleshot, preset...],
-    "target" : [x, A, B], // only if needed
-    "fields" : ["detector", "state"]
+  "TargetType" : {
+    "RuleType1" : {
+      "field1" : "type",
+      "field2" : "type"
+    }
+  },
+  "TargetType2" : {},
+  "target" : [],
+  "type" : []
 }
 ...
 }
-
-standart field types
-{//json root 
-    "field_types" : {
-        "type" : "string",
-        "target" : "string",
-        NO "subtype" : "string",
-        NO "state" : "boolean",
-        "preset_on" : "string"
-        "preset_off" : "string",
-        "timeout" : "int",
-    }
-}
 */
-// get range for command and command types
-struct RuleRange{
-    // cmd type
-    static json getTypes(){
-        json ret;
-        {
-            auto types = json::array();
-            for(const auto t : RuleType::_values()){
-                types.push_back(t._to_string());
-            }
-            ret["type"] = types;
-
-            types.clear();
-            for(const auto t : TargetType::_values()){
-                types.push_back(t._to_string());
-            }
-            ret["target"] = types;
-        }
-
-        // enumerate type args
-        ret[(+TargetType::Analitic)._to_string()] = {
-            {"type",{(+RuleType::Toggle)._to_string()}},
-            {"fields", {"detector"}
-            },
-        };
-
-        ret[(+TargetType::Video)._to_string()] = {
-            {{"type", (+RuleType::Preset)._to_string()}},
-            {"fields",{"preset_on", "preset_off"}}
-        };
-        
-        ret[(+TargetType::WhiteLight)._to_string()] = {
-            {{"type", {(+RuleType::OneShot)._to_string(), (+RuleType::Toggle)._to_string(),}}},
-            {"fields",{"preset_on", "preset_off"}}
-        };
-
-        // {//alarm cmd
-        //     json tmp;
+    // get range for command and command types
+    struct RuleRange{
+        // cmd type
+        static json getTypes(){
+            json ret;
             
 
-        //     {
-        //         json tmp_array = json::array();
-        //         for(const auto st : AlarmCmdSubtype::_values()){
-        //             tmp_array.push_back(st._to_string());
-        //         }
-        //         tmp["subtype"] = tmp_array;
-        //     }
-        //     tmp["fields"] = {
-        //         {(+AlarmCmdSubtype::Toggle)._to_string(), {}}, 
-        //         {(+AlarmCmdSubtype::SingleShot)._to_string(), {"timeout"}}
-        //     };
+            // enumerate type args: TargetType -> RuleType -> fields
+            // Analitic: only Toggle, field = detector
+            {
+                json toggle_fields;
+                toggle_fields["detector"] = json::array({"Fire", "Weapon"});
+                ret[(+TargetType::Analitic)._to_string()][(+RuleType::Toggle)._to_string()] = toggle_fields;
+            }
 
-        //     ret[(+RuleType::Alarm)._to_string()] = tmp;
-        // }
-        return ret;
-    }
-};
+            // Video: only Preset, fields = preset_on, preset_off (string)
+            {
+                json preset_fields;
+                preset_fields["preset_on"] = "string";
+                preset_fields["preset_off"] = "string";
+                ret[(+TargetType::Video)._to_string()][(+RuleType::Preset)._to_string()] = preset_fields;
+            }
+
+            // Alarm: Toggle (target: WhiteLight, RedBlue) and OneShot (target: WhiteLight, RedBlue, Sound)
+            {
+                json toggle_fields;
+                toggle_fields["target"] = json::array({"WhiteLight", "RedBlue"});
+                ret[(+TargetType::Alarm)._to_string()][(+RuleType::Toggle)._to_string()] = toggle_fields;
+
+                json oneshot_fields;
+                oneshot_fields["target"] = json::array({"WhiteLight", "RedBlue", "Sound"});
+                ret[(+TargetType::Alarm)._to_string()][(+RuleType::OneShot)._to_string()] = oneshot_fields;
+            }
+
+
+            // target enum array
+            {
+                auto arr = json::array();
+                for(const auto t : TargetType::_values()){
+                    arr.push_back(t._to_string());
+                }
+                ret["target"] = arr;
+            }
+
+            // type enum array
+            {
+                auto arr = json::array();
+                for(const auto t : RuleType::_values()){
+                    arr.push_back(t._to_string());
+                }
+                ret["type"] = arr;
+            }
+
+            return ret;
+        }
+    };
 
 using Command = std::pair<Rule, Event>;

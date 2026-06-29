@@ -12,9 +12,10 @@ std::optional<Rule> Rule::fromJson(const json& j) noexcept{
     try{
         optional<Rule> tmp;
         
-        const auto type = RuleType::_from_string(j.at("type").get_ref<const string&>().c_str());
-        const auto target = TargetType::_from_string(j.at("target").get_ref<const string&>().c_str());
-        switch(target._value){
+        const auto r_type = RuleType::_from_string(j.at(Fields::rule_type).get_ref<const string&>().c_str());
+        const auto t_type = TargetType::_from_string(j.at(Fields::target_type).get_ref<const string&>().c_str());
+        const string target = j.value(Fields::target, "");
+        switch(t_type._value){
             case TargetType::Invalid:{
                 cout << __PRETTY_FUNCTION__ << "WARN: test only\n";
                 tmp.emplace(Rule());
@@ -22,28 +23,30 @@ std::optional<Rule> Rule::fromJson(const json& j) noexcept{
             }
             
             case TargetType::Alarm: {
-                // auto s_type = AlarmCmdSubtype::_from_string(j.at("subtype").get_ref<const string&>().c_str());
-                tmp.emplace(AlarmCmd(target, type));
+                auto a_target = AlarmTarget::_from_string(target.c_str());
+                tmp.emplace(AlarmCmd(a_target, r_type));
                 break;
             }
             case TargetType::Video: {
-                tmp.emplace(VideoCmd());
-                tmp->data["preset_on"] = j.at("preset_on");
-                tmp->data["preset_off"] = j.at("preset_off");
+                VideoCmd v{};
+                v.setPresetOn(j.at("preset_on"));
+                v.setPresetOff(j.at("preset_off"));
+                tmp.emplace(std::move(v));
+                break;
+            }
+            case TargetType::Analitic: {
+                AnaliticTarget a_targ = AnaliticTarget::_from_string(target.c_str());
+                tmp.emplace(AnaliticCmd(a_targ));
                 break;
             }
             default: 
             {
-                if(target >= (+TargetType::Analitic) && target <= (+TargetType::AnaliticFire)) {
-                    tmp.emplace(AnaliticCmd(target, j.at("detector")));
-                }
-                else 
-                    throw logic_error("no type");
+                throw logic_error("no type");
                 break;
             }
         }
 
-        return *tmp;
+        return tmp;
     }
     catch(const std::exception& ex){
         cout << __PRETTY_FUNCTION__ << " " << ex.what() << endl;

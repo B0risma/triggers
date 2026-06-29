@@ -81,7 +81,7 @@ void testEvents(){
     }
     {
         // no event
-        cout << "NO EVENTS\n";
+        cout << "NO EVENTS HERE\n";
         in1->setState(false);
         sw1->setState(false);
         sh1->checkTime(sh1->start - chrono::seconds(5));
@@ -110,8 +110,8 @@ void testEvents(){
         {
             json act_j;
             act_j["name"] = "test";
-            act_j[Action::rules_f] = {{{"type",(+RuleType::Toggle)._to_string()},
-                                    {"target",(+TargetType::Invalid)._to_string()}}};
+            act_j[Action::rules_f] = {{{Rule::Fields::rule_type,(+RuleType::Toggle)._to_string()},
+                                    {Rule::Fields::target_type,(+TargetType::Invalid)._to_string()}}};
             cout << act_j.dump(1) << endl;
             act_list->addAction(Action::fromJson(act_j));
         }
@@ -129,7 +129,7 @@ void testEvents(){
         }
         
         // switch event
-        cout << "EVENTS\n";
+        cout << "EVENTS MUST BE\n";
         in1->setState(true);
         sw1->setState(true);
         sh1->checkTime(sh1->start + chrono::seconds(5));
@@ -149,9 +149,9 @@ int main() {
     auto triggers = std::get<2>(core);
 
 
-    // triggerTest();
-    // testEvents();
-    // return 0;
+    triggerTest();
+    testEvents();
+    return 0;
 
     auto switches = make_shared<VswitchList>();
     switches->que = queue;
@@ -209,7 +209,7 @@ int main() {
     // Create an action with a fire detector command and an alarm command
     Action act_set2;
     act_set2.name = "act_set2";
-    act_set2.rules = {AnaliticCmd(TargetType::Analitic, "Fire")};
+    act_set2.rules = {AnaliticCmd(AnaliticTarget::Fire)};
     // act_set2.cmds = {
     //     Command{"analitics", "fire", json{{"detector", "fire"}, {"enabled", true}}},
     //     Command{"alarm", "light", json{{"alarm_in", "light"}}}

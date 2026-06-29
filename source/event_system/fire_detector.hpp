@@ -96,7 +96,7 @@ public:
     : Detector(instance_name){
         // type_name = "fire_detector";
         // Subscribe to analitics:fire events
-        auto rule_key = Rule::ruleKey(RuleType::Toggle,TargetType::Analitic);
+        auto rule_key = Rule::ruleKey(RuleType::Toggle,TargetType::Analitic, (+AnaliticTarget::Fire)._to_string());
         supported_rules = {std::move(rule_key)};
     }
 
@@ -108,7 +108,7 @@ public:
 
         const auto& rule = cmd.first;
         const auto& evn = cmd.second;
-        if(rule.target._value != TargetType::Analitic){
+        if(rule.target_type != (+TargetType::Analitic)){
             cout << __PRETTY_FUNCTION__ << " skip cmd: " << rule.toString() << endl;
             return;
         }
@@ -139,7 +139,7 @@ public:
     : Detector(instance_name){
         // type_name = "weapon_detector";
         // Subscribe to analitics:fire events
-        auto rule_key = Rule::ruleKey(RuleType::Toggle, TargetType::Analitic);
+        auto rule_key = Rule::ruleKey(RuleType::Toggle,TargetType::Analitic, (+AnaliticTarget::Weapon)._to_string());
         supported_rules = {std::move(rule_key)};
     }
 
@@ -151,7 +151,7 @@ public:
         cout << "WeaponDetector '" << name << "': received event "
              << evn.toString() << endl;
 
-        if(rule.target._value != TargetType::Analitic){
+        if(rule.target_type != (+TargetType::Analitic)){
             cout << __PRETTY_FUNCTION__ << " sckip cmd: " << rule.toString() << endl;
             return;
         }
