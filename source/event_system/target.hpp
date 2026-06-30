@@ -16,6 +16,11 @@ using namespace std;
 /// Targets are registered in TargetList and subscribe to event types they support.
 class Target {
 public:
+    struct Fields{
+        static constexpr auto name = "name";
+        static constexpr auto suppported_rule = "supported_rules";
+    };
+
     string name;                        ///< Target identifier (e.g. "fire_detector_1")
     // string type_name;                   ///< Target type (e.g. "fire_detector")
     set<string> supported_rules;       ///< Set of event keys ("analitics:fire", etc.)
@@ -35,9 +40,9 @@ public:
     /// Serialize target info to JSON (for listing)
     virtual json toJson() const {
         json j;
-        j["name"] = name;
+        j[Fields::name] = name;
         // j["type"] = type_name;
-        j["supported_rules"] = supported_rules;
+        j[Fields::suppported_rule] = supported_rules;
         return j;
     }
 };

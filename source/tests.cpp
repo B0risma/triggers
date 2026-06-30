@@ -1,3 +1,4 @@
+// #include "event_system/command.hpp"
 #include "event_system/event.hpp"
 #include "event_system/rule.hpp"
 #include "event_system/target.hpp"
@@ -7,6 +8,7 @@
 #include "event_system/trigger_sample.hpp"
 #include "event_system/fire_detector.hpp"
 #include "json.hpp"
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <memory>
@@ -98,7 +100,7 @@ void test_rule_creation() {
         AlarmCmd alarm(AlarmTarget::WhiteLight, RuleType::Toggle);
         ASSERT(alarm.type == (+RuleType::Toggle), "AlarmCmd type should be Toggle");
         ASSERT(alarm.target_type == (+TargetType::Alarm), "AlarmCmd target_type should be Alarm");
-        ASSERT(alarm.target == "WhiteLight", "AlarmCmd target should be WhiteLight");
+        ASSERT(alarm.target == (+AlarmTarget::WhiteLight)._to_string(), "AlarmCmd target should be WhiteLight");
     } END_TEST;
 
     TEST("VideoCmd creation") {
@@ -113,7 +115,7 @@ void test_rule_creation() {
         AnaliticCmd ac(AnaliticTarget::Fire);
         ASSERT(ac.type == (+RuleType::Toggle), "AnaliticCmd type should be Toggle");
         ASSERT(ac.target_type == (+TargetType::Analitic), "AnaliticCmd target_type should be Analitic");
-        ASSERT(ac.target == "Fire", "AnaliticCmd target should be Fire");
+        ASSERT(ac.target == (+AnaliticTarget::Fire)._to_string(), "AnaliticCmd target should be Fire");
     } END_TEST;
 
     TEST("Rule::ruleKey") {
@@ -123,40 +125,44 @@ void test_rule_creation() {
         ASSERT(key.find("Toggle") != string::npos, "ruleKey should contain rule type");
         ASSERT(key.find("Alarm") != string::npos, "ruleKey should contain target type");
         ASSERT(key.find("Light") != string::npos, "ruleKey should contain target");
+        ASSERT((count_if(key.cbegin(), key.cend(), [](const char c){return c == ':';}) == 2), "must be 2 delimiter");
     } END_TEST;
 
     TEST("Rule fromJson - Alarm") {
         json j = {
-            {"rule_type", "Toggle"},
-            {"target_type", "Alarm"},
-            {"target", "WhiteLight"}
+            {Rule::Fields::rule_type, (+RuleType::Toggle)._to_string()},
+            {Rule::Fields::target_type, (+TargetType::Alarm)._to_string()},
+            {Rule::Fields::target, (+AlarmTarget::WhiteLight)._to_string()}
         };
         auto opt = Rule::fromJson(j);
         ASSERT(opt.has_value(), "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Alarm), "parsed target_type should be Alarm");
+        ASSERT(opt->type == (+RuleType::Toggle), "Must be toggle");
     } END_TEST;
 
     TEST("Rule fromJson - Video") {
         json j = {
-            {"rule_type", "Toggle"},
-            {"target_type", "Video"},
+            {Rule::Fields::rule_type, (+RuleType::Preset)._to_string()},
+            {Rule::Fields::target_type, (+TargetType::Video)._to_string()},
             {"preset_on", "3"},
             {"preset_off", "7"}
         };
         auto opt = Rule::fromJson(j);
         ASSERT(opt.has_value(), "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Video), "parsed target_type should be Video");
+        ASSERT(opt->type == (+RuleType::Preset), "Must be Preset");
     } END_TEST;
 
     TEST("Rule fromJson - Analitic") {
         json j = {
-            {"rule_type", "Toggle"},
-            {"target_type", "Analitic"},
+            {Rule::Fields::rule_type, (+RuleType::Toggle)._to_string()},    
+            {Rule::Fields::target_type, (+TargetType::Analitic)._to_string()},
             {"target", "Fire"}
         };
         auto opt = Rule::fromJson(j);
         ASSERT(opt.has_value(), "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Analitic), "parsed target_type should be Analitic");
+        ASSERT(opt->type == (+RuleType::Toggle), "Must be toggle");
     } END_TEST;
 
     TEST("Rule fromJson - Invalid returns nullopt") {
@@ -186,13 +192,20 @@ public:
 
     TestTarget(const string& name_val) {
         name = name_val;
-        supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
+        supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)}; //invalid for Test
     }
 
     void procEvent(const Command& cmd) override {
         Target::procEvent(cmd);
         event_count++;
         received_commands.push_back(cmd);
+    }
+
+    static Rule supportedRuleTemplate(){
+        Rule tmp;
+        tmp.type = RuleType::Toggle;
+        tmp.target_type = TargetType::Invalid;
+        return tmp;
     }
 };
 
@@ -206,7 +219,7 @@ void test_target_creation() {
     TEST("Target toJson") {
         auto t = make_shared<TestTarget>("target_json");
         json j = t->toJson();
-        ASSERT(j["name"] == "target_json", "toJson should contain name");
+        ASSERT(j[Target::Fields::name] == "target_json", "toJson should contain name");
     } END_TEST;
 
     TEST("Target canHandle") {
@@ -231,15 +244,33 @@ void test_trigger_creation() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
+        // auto targets = make_shared<TargetList>();
         queue->setRegistries(triggers, actions);
 
         auto gt = make_shared<GPIOTrigger>("gpio_emit");
         gt->setEventQueue(queue);
         triggers->add(gt);
 
+        auto t_targ = make_shared<TestTarget>("Target1");
+        queue->subscribeTarget(t_targ);
+
+        Action test_act;
+        test_act.name = "test";
+        test_act.rules.push_back(TestTarget::supportedRuleTemplate());
+        actions->addAction(test_act);
+        json link = {
+            {EventActionLink::evn_key_f, gt->evnKey()},
+            {EventActionLink::action_f, test_act.name}
+        };
+        actions->addLink(EventActionLink::fromJson(link));
+
+
         // setState(true) should emit an event
         gt->setState(true);
         ASSERT(gt->getState() == true, "GPIOTrigger state should be true after setState(true)");
+
+        this_thread::sleep_for(chrono::milliseconds(100)); // queue thread time
+        ASSERT(t_targ->event_count == 1, "Must be handled event");
     } END_TEST;
 
     TEST("Vswitch creation") {
@@ -300,8 +331,8 @@ void test_action_creation() {
         json j;
         j["name"] = "bad_action";
         j[Action::rules_f] = {{
-            {"rule_type", "Invalid"},
-            {"target_type", "Invalid"}
+            {Rule::Fields::rule_type, "Invalid"},
+            {Rule::Fields::target_type, "Invalid"}
         }};
         try {
             Action::fromJson(j);
@@ -417,7 +448,7 @@ void test_event_queue() {
         // Link trigger to action
         EventActionLink link;
         link.evn_key = "GPIO:pipeline_trigger";
-        link.action = "pipeline_action";
+        link.action = act.name;
         actions->addLink(link);
 
         // Create a GPIO trigger and emit event
@@ -464,7 +495,7 @@ void test_full_system() {
 
         EventActionLink link;
         link.evn_key = "GPIO:integration_trig";
-        link.action = "integration_action";
+        link.action = act.name;
         actions->addLink(link);
 
         // Emit event
@@ -548,7 +579,7 @@ void test_fire_detector() {
 
         EventActionLink link;
         link.evn_key = "GPIO:fd_trig";
-        link.action = "fd_action";
+        link.action = act.name;
         actions->addLink(link);
 
         ASSERT(fd->isEnabled() == false, "FireDetector should start disabled");
