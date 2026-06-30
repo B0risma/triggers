@@ -9,11 +9,6 @@ void APIHandler::registerRoutes(httplib::Server& srv) {
         handleTriggerList(req, res);
     });
 
-    // GET /target — target list (read-only, system-only editable)
-    srv.Get(target_URI, [this](const httplib::Request& req, httplib::Response& res) {
-        handleTargetList(req, res);
-    });
-
     // GET /action — list all actions
     srv.Get(action_URI, [this](const httplib::Request& req, httplib::Response& res) {
         handleActionList(req, res);
@@ -64,19 +59,6 @@ void APIHandler::handleTriggerList(const httplib::Request& req, httplib::Respons
             res.set_content(triggers_->toKindListJson().dump(), json_content);
         } else {
             res.set_content(json::object().dump(), json_content);
-        }
-    } catch (const exception& ex) {
-        res.status = 500;
-        res.set_content(json{{"error", ex.what()}}.dump(), json_content);
-    }
-}
-
-void APIHandler::handleTargetList(const httplib::Request& req, httplib::Response& res) {
-    try {
-        if (targets_) {
-            res.set_content(targets_->toJson().dump(), json_content);
-        } else {
-            res.set_content(json::array().dump(), json_content);
         }
     } catch (const exception& ex) {
         res.status = 500;

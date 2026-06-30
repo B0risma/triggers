@@ -4,7 +4,6 @@
 #include "httplib.h"
 #include "json.hpp"
 #include "event.hpp"
-#include "target.hpp"
 #include "trigger.hpp"
 #include "action.hpp"
 #include "event_queue.hpp"
@@ -16,7 +15,6 @@ using namespace std;
 /// APIHandler — handles webAPI requests for the event system.
 /// Based on API2.json:
 ///   GET  /trigger     → trigger list by kinds (read-only, not editable via API)
-///   GET  /target      → target list (read-only, system-only editable)
 ///   GET  /action      → list all actions
 ///   POST /action      → create action with cmds
 ///   DELETE /action    → delete action by name
@@ -29,13 +27,11 @@ public:
 
     /// Set the system registries that this handler will query/modify
     void setRegistries(
-        shared_ptr<TargetList> targets,
         shared_ptr<TriggerList> triggers,
         shared_ptr<ActionList> actions,
         shared_ptr<EventQueue> queue,
         shared_ptr<VswitchList> switches
     ) {
-        targets_ = targets;
         triggers_ = triggers;
         actions_ = actions;
         queue_ = queue;
@@ -48,7 +44,6 @@ public:
     // --- Route handlers ---
     void handleTriggerList(const httplib::Request& req, httplib::Response& res);
     void handleSwitchList(const  httplib::Request& req, httplib::Response& res);
-    void handleTargetList(const httplib::Request& req, httplib::Response& res);
     void handleActionList(const httplib::Request& req, httplib::Response& res);
     void handleActionCreate(const httplib::Request& req, httplib::Response& res);
     void handleActionDelete(const httplib::Request& req, httplib::Response& res);
@@ -58,13 +53,11 @@ public:
 
     // URI constants
     static constexpr auto trigger_URI = "/trigger"s;
-    static constexpr auto target_URI = "/target"s;
     static constexpr auto action_URI = "/action"s;
     static constexpr auto link_URI = "/link"s;
     static constexpr auto switch_URI = "/switch"s;
 
 private:
-    shared_ptr<TargetList> targets_;
     shared_ptr<TriggerList> triggers_;
     shared_ptr<ActionList> actions_;
     shared_ptr<EventQueue> queue_;

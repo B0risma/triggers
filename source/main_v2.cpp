@@ -180,7 +180,7 @@ int main() {
 
     // --- 6. Set up API handler ---
     APIHandler api;
-    api.setRegistries({},triggers, actions, queue, switches);
+    api.setRegistries(triggers, actions, queue, switches);
 
     httplib::Server srv;
     api.registerRoutes(srv);
@@ -191,7 +191,6 @@ int main() {
     cout << "\nServer listen on http://" << addr << ":" << port << "\n";
     cout << "API endpoints:\n";
     cout << "  GET  /trigger  → trigger list by kinds\n";
-    cout << "  GET  /target   → target list\n";
     cout << "  GET  /action   → action list\n";
     cout << "  POST /action   → create action\n";
     cout << "  DELETE /action → delete action\n";
