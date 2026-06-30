@@ -38,40 +38,7 @@ List all triggers in the system, grouped by trigger kind.
 
 ---
 
-## 2. Targets (Read-Only)
-
-### GET `/target`
-
-List all targets registered in the system (system-managed, not editable via API).
-
-**Response 200** — Array of target objects:
-```json
-[
-  {
-    "name": "fire_detector_1",
-    "supported_rules": ["Analitic:Fire:Toggle"],
-    "enabled": false
-  },
-  {
-    "name": "weapon_detector_1",
-    "supported_rules": ["Analitic:Weapon:Toggle"],
-    "enabled": false
-  },
-  {
-    "name": "white_light_alarm",
-    "supported_rules": ["Alarm:WhiteLight:Toggle", "Alarm:WhiteLight:OneShot"]
-  }
-]
-```
-
-**Response 500** — Internal error:
-```json
-{"error": "error message"}
-```
-
----
-
-## 3. Actions (CRUD)
+## 2. Actions (CRUD)
 
 ### GET `/action`
 
@@ -193,7 +160,7 @@ Delete an action by name. Also removes all links referencing this action.
 
 ---
 
-## 4. Trigger-Action Links (CRUD)
+## 3. Trigger-Action Links (CRUD)
 
 ### GET `/link`
 
@@ -259,7 +226,7 @@ DELETE /link?trigger=GPIO:in1&action=act_set1
 
 ---
 
-## 5. Virtual Switches (CRUD)
+## 4. Virtual Switches (CRUD)
 
 ### POST `/switch`
 
@@ -310,9 +277,9 @@ DELETE /switch?name=sw1
 
 ---
 
-## 6. Action Creation Samples (by target type)
+## 5. Action Creation Samples (by target type)
 
-### 6.1 Analitic — Toggle fire detector
+### 5.1 Analitic — Toggle fire detector
 
 ```json
 {
@@ -328,7 +295,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.2 Analitic — Toggle weapon detector
+### 5.2 Analitic — Toggle weapon detector
 
 ```json
 {
@@ -344,7 +311,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.3 Video — Preset command
+### 5.3 Video — Preset command
 
 ```json
 {
@@ -361,7 +328,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.4 Alarm — Toggle WhiteLight
+### 5.4 Alarm — Toggle WhiteLight
 
 ```json
 {
@@ -376,7 +343,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.5 Alarm — Toggle RedBlue
+### 5.5 Alarm — Toggle RedBlue
 
 ```json
 {
@@ -391,7 +358,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.6 Alarm — OneShot Sound (siren)
+### 5.6 Alarm — OneShot Sound (siren)
 
 ```json
 {
@@ -406,7 +373,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.7 Alarm — OneShot WhiteLight (flash)
+### 5.7 Alarm — OneShot WhiteLight (flash)
 
 ```json
 {
@@ -421,7 +388,7 @@ DELETE /switch?name=sw1
 }
 ```
 
-### 6.8 Multiple rules in one action
+### 5.8 Multiple rules in one action
 
 ```json
 {
@@ -455,9 +422,9 @@ DELETE /switch?name=sw1
 
 ---
 
-## 7. Virtual Switch Lifecycle Example
+## 6. Virtual Switch Lifecycle Example
 
-### 7.1 Create switch
+### 6.1 Create switch
 
 ```
 POST /switch
@@ -466,7 +433,7 @@ Content-Type: text/json
 {"name": "sw1", "state": true}
 ```
 
-### 7.2 Link switch trigger to an action
+### 6.2 Link switch trigger to an action
 
 ```
 POST /link
@@ -475,7 +442,7 @@ Content-Type: text/json
 {"event": "VirtSwitch:sw1", "action": "act_fire_toggle"}
 ```
 
-### 7.3 Toggle switch state (fires event)
+### 6.3 Toggle switch state (fires event)
 
 ```
 PATCH /switch
@@ -484,7 +451,7 @@ Content-Type: text/json
 {"name": "sw1", "state": false}
 ```
 
-### 7.4 Delete switch
+### 6.4 Delete switch
 
 ```
 DELETE /switch?name=sw1
@@ -492,7 +459,7 @@ DELETE /switch?name=sw1
 
 ---
 
-## 8. Complete Workflow Example
+## 7. Complete Workflow Example
 
 ### Step 1 — Create actions
 
