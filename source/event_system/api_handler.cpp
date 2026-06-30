@@ -188,16 +188,23 @@ void APIHandler::handleSwitchList(const  httplib::Request& req, httplib::Respons
         if (switches_) {
             if(req.method == "POST"){
                 switches_->add(json::parse(req.body));
+                res.set_content(json{{"status", "created"}}.dump(), json_content);
             }
             else if(req.method == "DELETE"){
                 switches_->del(req.get_param_value("name"));
+                res.set_content(json{{"status", "deleted"}}.dump(), json_content);
             }
             else if(req.method == "PATCH"){
                 switches_->set(json::parse(req.body));
+                res.set_content(json{{"status", "updated"}}.dump(), json_content);
+            }
+            else if(req.method == "GET"){
+                // Note: GET is not currently registered, but handle gracefully
+                res.set_content(json{{"status", "ok"}}.dump(), json_content);
             }
         } else {
             res.status = 500;
-            res.set_content(json::object().dump(), json_content);
+            res.set_content(json{{"error", "no switches registry"}}.dump(), json_content);
         }
     } catch (const exception& ex) {
         res.status = 500;
