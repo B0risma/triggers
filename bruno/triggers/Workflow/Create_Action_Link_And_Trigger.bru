@@ -1,0 +1,29 @@
+meta {
+  name: Workflow: Create Action, Link & Trigger
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/action
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: text/json
+}
+
+body:json {
+  {
+    "name": "act_set1",
+    "rules": [
+      {
+        "rule_type": "Set",
+        "target_type": "GPIO",
+        "target": "out1",
+        "detector": "GPIO"
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+meta {
+  name: POST /link
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/link
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: text/json
+}
+
+body:json {
+  {
+    "event": "GPIO:in1",
+    "action": "act_set1"
+  }
+}

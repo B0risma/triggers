@@ -1,0 +1,29 @@
+meta {
+  name: POST /action
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/action
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: text/json
+}
+
+body:json {
+  {
+    "name": "my_action",
+    "rules": [
+      {
+        "rule_type": "Toggle",
+        "target_type": "Analitic",
+        "target": "Fire",
+        "detector": "Fire"
+      }
+    ]
+  }
+}

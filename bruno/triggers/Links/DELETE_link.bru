@@ -1,0 +1,11 @@
+meta {
+  name: DELETE /link
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://localhost:8080/link?trigger=GPIO:in1&action=act_set1
+  body: none
+  auth: none
+}
