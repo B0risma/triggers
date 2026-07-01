@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include <cstdlib>
 #include <exception>
+#include <fstream>
 #include <memory>
 #include <iostream>
 #include <chrono>
@@ -234,6 +235,24 @@ int main() {
     // gpio_in2->startSimulation(3000);  // toggles every 3 seconds
 
     cout << "\nStarting HTTP server...\n";
+
+    srv.Get("/", [&](const httplib::Request& req, httplib::Response& res) {
+        auto readFile = [](const string fName)->string{
+            ifstream f(fName);
+            if(!f.is_open()) return {}; 
+            stringstream cont;
+            cont << f.rdbuf();
+            return cont.str();
+        };
+        std::string html = readFile("index.html");
+        if (html.empty()) {
+            res.status = 404;
+            res.set_content("File not found", "text/plain");
+            return;
+        }
+        res.set_content(html, "text/html");
+    });
+
     srv.listen(addr, port);
     
 

@@ -23,7 +23,7 @@
      - event 
     - vswitch - V
 
-### todo  
+### todo 
 
 1. check event routes (composite key or source only)
 1. Targets dont subscribe to queue after addition to TargetList - (use target list only inside queue and add targets with queue) OR ( use external targ list and auto subcribe while addition) AND NO API for target list

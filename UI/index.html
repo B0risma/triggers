@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event‑Driven System · UI</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: #f4f7fc;
+      margin: 0;
+      padding: 2rem 1.5rem;
+      color: #1e293b;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 {
+      font-weight: 600;
+      font-size: 2rem;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 2px solid #d0d9e8;
+      padding-bottom: 0.75rem;
+    }
+    h1 small { font-size: 1rem; font-weight: 400; color: #475569; margin-left: auto; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.8rem;
+      margin-top: 1.8rem;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.2rem 1.4rem 1.8rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.04), 0 2px 6px rgba(0,20,40,0.06);
+      border: 1px solid #e9eef3;
+    }
+    .card h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 0.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .card h2 button {
+      margin-left: auto;
+      background: #eef2f8;
+      border: none;
+      border-radius: 30px;
+      padding: 0.2rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .card h2 button:hover { background: #dce3ed; }
+    .list {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .list-item {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 0.5rem;
+      border-left: 4px solid #94a3b8;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      word-break: break-word;
+    }
+    .list-item .badge {
+      background: #dbeafe;
+      color: #1e4a7a;
+      border-radius: 20px;
+      padding: 0.1rem 0.7rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .list-item .del {
+      background: transparent;
+      border: none;
+      color: #b91c1c;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.2rem;
+      opacity: 0.5;
+      transition: 0.1s;
+    }
+    .list-item .del:hover { opacity: 1; }
+    .empty { color: #64748b; font-style: italic; font-size: 0.9rem; padding: 0.5rem 0; }
+    .rule-block {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 0.6rem 0.9rem;
+      margin: 0.4rem 0;
+      font-size: 0.8rem;
+      border-left: 3px solid #3b82f6;
+    }
+    .rule-block strong { color: #0f172a; }
+    .modal {
+      background: white;
+      border-radius: 24px;
+      padding: 1.8rem 2rem;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      border: 1px solid #dce3ed;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-backdrop {
+      background: rgba(15,23,42,0.3);
+      backdrop-filter: blur(3px);
+      position: fixed;
+      top:0;left:0;width:100%;height:100%;
+      z-index: 999;
+    }
+    .modal h3 { margin-top: 0; font-weight: 600; }
+    .modal label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin: 0.8rem 0 0.2rem;
+      color: #334155;
+    }
+    .modal input, .modal select {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      background: white;
+    }
+    .modal .row { display: flex; gap: 1rem; margin-top: 0.3rem; }
+    .modal .row > * { flex:1; }
+    .modal .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+    .modal .actions button {
+      padding: 0.4rem 1.4rem;
+      border-radius: 40px;
+      border: none;
+      font-weight: 500;
+      background: #e9edf3;
+      cursor: pointer;
+    }
+    .modal .actions .primary { background: #0f172a; color: white; }
+    .modal .actions .primary:hover { background: #1e293b; }
+    .modal .field-hint {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 0.15rem;
+    }
+    .toast {
+      background: #0b1e33;
+      color: white;
+      padding: 0.6rem 1.4rem;
+      border-radius: 40px;
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      z-index: 2000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ Event‑Driven System <small>triggers · actions · links</small></h1>
+  <div class="grid" id="app">
+    <!-- TRIGGERS -->
+    <div class="card">
+      <h2>📡 Triggers <button id="refreshTriggersBtn">↻</button></h2>
+      <div id="triggerList" class="list"></div>
+    </div>
+    <!-- ACTIONS -->
+    <div class="card">
+      <h2>⚙️ Actions <button id="newActionBtn">+ New</button></h2>
+      <div id="actionList" class="list"></div>
+    </div>
+    <!-- LINKS -->
+    <div class="card">
+      <h2>🔗 Links <button id="newLinkBtn">+ Link</button></h2>
+      <div id="linkList" class="list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL placeholder -->
+<div id="modalContainer"></div>
+<div id="toastContainer"></div>
+
+<script>
+  // ---------- BASE ----------
+  const API_BASE = 'http://127.0.0.1:8080';
+  const headers = { 'Content-Type': 'text/json' };
+
+  // ---------- helpers ----------
+  function apiFetch(path, options = {}) {
+    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    return fetch(url, { ...options, headers: { ...headers, ...options.headers } })
+      .then(async res => {
+        const text = await res.text();
+        try { return { ok: res.ok, status: res.status, data: text ? JSON.parse(text) : null }; }
+        catch { return { ok: res.ok, status: res.status, data: text }; }
+      });
+  }
+
+  function showToast(msg, duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => { el.remove(); }, duration);
+  }
+
+  function closeModal() {
+    document.getElementById('modalContainer').innerHTML = '';
+  }
+
+  // ---------- render: triggers ----------
+  async function loadTriggers() {
+    const res = await apiFetch('/trigger');
+    const container = document.getElementById('triggerList');
+    if (!res.ok) {
+      container.innerHTML = `<div class="empty">⚠️ ${res.data?.error || 'failed'}</div>`;
+      return;
+    }
+    const data = res.data || {};
+    let html = '';
+    for (const [kind, items] of Object.entries(data)) {
+      if (!items.length) continue;
+      html += `<div style="margin-top:0.5rem;font-weight:600;font-size:0.75rem;color:#475569;">${kind}</div>`;
+      items.forEach(t => {
+        const ev = t.event || `${kind}:${t.name}`;
+        html += `<div class="list-item"><span>${ev}</span><span class="badge">${kind}</span></div>`;
+      });
+    }
+    container.innerHTML = html || '<div class="empty">no triggers</div>';
+  }
+
+  // ---------- render: actions ----------
+  async function loadActions() {
+    const res = await apiFetch('/action');
+    const container = document.getElementById('actionList');
+    if (!res.ok) {
+      container.innerHTML = `<div class="empty">⚠️ ${res.data?.error || 'failed'}</div>`;
+      return;
+    }
+    const data = res.data || {};
+    const names = Object.keys(data);
+    if (!names.length) { container.innerHTML = '<div class="empty">no actions</div>'; return; }
+
+    let html = '';
+    names.forEach(name => {
+      const action = data[name];
+      const rules = action.rules || [];
+      html += `<div class="list-item" style="flex-direction:column;align-items:stretch;gap:0.2rem;">
+                  <div style="display:flex;justify-content:space-between;width:100%;">
+                    <strong>${name}</strong>
+                    <button class="del" data-action="deleteAction" data-name="${name}">✕</button>
+                  </div>`;
+      if (rules.length) {
+        rules.forEach(r => {
+          const parts = [`${r.rule_type || '?'}`];
+          if (r.target_type) parts.push(`target:${r.target_type}`);
+          if (r.target) parts.push(`→${r.target}`);
+          if (r.detector) parts.push(`det:${r.detector}`);
+          if (r.preset_on) parts.push(`on:${r.preset_on}`);
+          if (r.preset_off) parts.push(`off:${r.preset_off}`);
+          html += `<div class="rule-block">${parts.join(' · ')}</div>`;
+        });
+      } else {
+        html += `<div class="rule-block" style="opacity:0.6;">(no rules)</div>`;
+      }
+      html += `</div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('[data-action="deleteAction"]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const name = btn.dataset.name;
+        if (!confirm(`Delete action "${name}" ?`)) return;
+        const res = await apiFetch(`/action?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+        if (res.ok) { showToast(`deleted ${name}`); loadActions(); loadLinks(); }
+        else showToast(`❌ ${res.data?.error || 'delete failed'}`, 4000);
+      });
+    });
+  }
+
+  // ---------- render: links ----------
+  async function loadLinks() {
+    const res = await apiFetch('/link');
+    const container = document.getElementById('linkList');
+    if (!res.ok) {
+      container.innerHTML = `<div class="empty">⚠️ ${res.data?.error || 'failed'}</div>`;
+      return;
+    }
+    const data = res.data || [];
+    if (!data.length) { container.innerHTML = '<div class="empty">no links</div>'; return; }
+
+    let html = '';
+    data.forEach(link => {
+      const ev = link.event || '?';
+      const act = link.action || '?';
+      html += `<div class="list-item">
+                  <span><strong>${ev}</strong> → ${act}</span>
+                  <button class="del" data-link="${ev}|${act}">✕</button>
+                </div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const [trigger, action] = btn.dataset.link.split('|');
+        if (!confirm(`Unlink "${trigger}" → "${action}" ?`)) return;
+        const res = await apiFetch(`/link?trigger=${encodeURIComponent(trigger)}&action=${encodeURIComponent(action)}`, { method: 'DELETE' });
+        if (res.ok) { showToast(`unlinked ${trigger} → ${action}`); loadLinks(); }
+        else showToast(`❌ ${res.data?.error || 'unlink failed'}`, 4000);
+      });
+    });
+  }
+
+  // ---------- DYNAMIC RULE FORM (uses /action?range=1) ----------
+  let ruleSchema = null;
+
+  async function fetchSchema() {
+    if (ruleSchema) return ruleSchema;
+    const res = await apiFetch('/action?range=1');
+    if (res.ok) {
+      ruleSchema = res.data || {};
+      return ruleSchema;
+    }
+    return null;
+  }
+
+  // build dynamic fields based on selected targetType + ruleType
+  function buildDynamicFields(targetType, ruleType, schema) {
+    const container = document.getElementById('dynamicRuleFields');
+    container.innerHTML = '';
+    if (!targetType || !ruleType) return;
+
+    // schema structure: { "Analitic": { "Toggle": { "detector": ["Fire","Weapon"] } }, ... }
+    const targetEntry = schema[targetType];
+    if (!targetEntry) return;
+    const ruleEntry = targetEntry[ruleType];
+    if (!ruleEntry) return;
+
+    // ruleEntry is an object: e.g. { "target": ["WhiteLight","RedBlue"] } or { "preset_on": "string", "preset_off": "string" }
+    for (const [fieldName, fieldDef] of Object.entries(ruleEntry)) {
+      const wrapper = document.createElement('div');
+      wrapper.style.marginBottom = '0.8rem';
+
+      const label = document.createElement('label');
+      label.textContent = fieldName;
+      wrapper.appendChild(label);
+
+      let input;
+      if (Array.isArray(fieldDef)) {
+        // selector widget
+        input = document.createElement('select');
+        input.name = fieldName;
+        const emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = `— select ${fieldName} —`;
+        input.appendChild(emptyOpt);
+        fieldDef.forEach(val => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = val;
+          input.appendChild(opt);
+        });
+        // if fieldName === 'target' and targetType === 'Alarm' we might want to keep it as select
+      } else if (typeof fieldDef === 'string' && fieldDef === 'string') {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.name = fieldName;
+        input.placeholder = fieldName;
+      } else {
+        // fallback: text input
+        input = document.createElement('input');
+        input.type = 'text';
+        input.name = fieldName;
+        input.placeholder = fieldName;
+      }
+      input.className = 'dynamic-field';
+      input.dataset.field = fieldName;
+      wrapper.appendChild(input);
+
+      // small hint
+      const hint = document.createElement('div');
+      hint.className = 'field-hint';
+      if (Array.isArray(fieldDef)) {
+        hint.textContent = `options: ${fieldDef.join(', ')}`;
+      } else if (fieldDef === 'string') {
+        hint.textContent = 'text value';
+      }
+      wrapper.appendChild(hint);
+      container.appendChild(wrapper);
+    }
+  }
+
+  // ---------- modal: create action (with dynamic fields) ----------
+  async function showNewActionModal() {
+    const container = document.getElementById('modalContainer');
+    const schema = await fetchSchema();
+    if (!schema) {
+      showToast('⚠️ could not load rule schema', 3000);
+      return;
+    }
+
+    // collect target types from schema (keys except "target" and "type")
+    const targetTypes = Object.keys(schema).filter(k => k !== 'target' && k !== 'type');
+    const ruleTypes = schema['type'] || ['Toggle', 'OneShot', 'Number', 'Preset'];
+
+    container.innerHTML = `
+      <div class="modal-backdrop" onclick="closeModal()"></div>
+      <div class="modal">
+        <h3>➕ New Action</h3>
+        <label>Action name</label>
+        <input id="newActionName" placeholder="e.g. my_action" value="act_${Date.now().toString(36)}" />
+        
+        <label>Target type</label>
+        <select id="newTargetType">
+          <option value="">— select —</option>
+          ${targetTypes.map(tt => `<option value="${tt}">${tt}</option>`).join('')}
+        </select>
+        
+        <label>Rule type</label>
+        <select id="newRuleType">
+          <option value="">— select —</option>
+          ${ruleTypes.map(rt => `<option value="${rt}">${rt}</option>`).join('')}
+        </select>
+        
+        <div id="dynamicRuleFields" style="margin-top: 0.8rem;"></div>
+        
+        <div class="actions">
+          <button onclick="closeModal()">Cancel</button>
+          <button class="primary" id="submitActionBtn">Create</button>
+        </div>
+      </div>
+    `;
+
+    // dynamic field update on change
+    const targetTypeSelect = document.getElementById('newTargetType');
+    const ruleTypeSelect = document.getElementById('newRuleType');
+
+    function updateFields() {
+      const tt = targetTypeSelect.value;
+      const rt = ruleTypeSelect.value;
+      buildDynamicFields(tt, rt, schema);
+    }
+
+    targetTypeSelect.addEventListener('change', updateFields);
+    ruleTypeSelect.addEventListener('change', updateFields);
+
+    // submit
+    document.getElementById('submitActionBtn').addEventListener('click', async () => {
+      const name = document.getElementById('newActionName').value.trim();
+      if (!name) { showToast('enter action name', 2000); return; }
+      const targetType = targetTypeSelect.value;
+      const ruleType = ruleTypeSelect.value;
+      if (!targetType || !ruleType) { showToast('select target type and rule type', 2000); return; }
+
+      // collect dynamic fields
+      const dynamicFields = document.querySelectorAll('.dynamic-field');
+      const rule = { rule_type: ruleType, target_type: targetType };
+      dynamicFields.forEach(el => {
+        const fieldName = el.dataset.field;
+        let value = el.value;
+        if (el.tagName === 'SELECT') {
+          value = el.value;
+        } else {
+          value = el.value.trim();
+        }
+        if (value !== '') {
+          rule[fieldName] = value;
+        }
+      });
+
+      // ensure target field if it's required by schema but not filled? we just send what we have.
+
+      const payload = { name, rules: [rule] };
+      const res = await apiFetch('/action', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      closeModal();
+      if (res.ok) { showToast(`action "${name}" created`); loadActions(); loadLinks(); }
+      else showToast(`❌ ${res.data?.error || 'create failed'}`, 4000);
+    });
+  }
+
+  // ---------- modal: create link ----------
+  function showNewLinkModal() {
+    const container = document.getElementById('modalContainer');
+    Promise.all([
+      apiFetch('/trigger'),
+      apiFetch('/action')
+    ]).then(([triggerRes, actionRes]) => {
+      const triggers = triggerRes.ok ? triggerRes.data : {};
+      const actions = actionRes.ok ? Object.keys(actionRes.data || {}) : [];
+      const eventOptions = [];
+      for (const [kind, items] of Object.entries(triggers)) {
+        items.forEach(t => {
+          const ev = t.event || `${kind}:${t.name}`;
+          eventOptions.push(ev);
+        });
+      }
+      container.innerHTML = `
+        <div class="modal-backdrop" onclick="closeModal()"></div>
+        <div class="modal">
+          <h3>🔗 Link Event → Action</h3>
+          <label>Event (trigger)</label>
+          <select id="linkEventSelect">
+            ${eventOptions.length ? eventOptions.map(e => `<option value="${e}">${e}</option>`).join('') : '<option value="">no triggers</option>'}
+          </select>
+          <label>Action</label>
+          <select id="linkActionSelect">
+            ${actions.length ? actions.map(a => `<option value="${a}">${a}</option>`).join('') : '<option value="">no actions</option>'}
+          </select>
+          <div class="actions">
+            <button onclick="closeModal()">Cancel</button>
+            <button class="primary" id="submitLinkBtn">Link</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('submitLinkBtn').addEventListener('click', async () => {
+        const event = document.getElementById('linkEventSelect').value;
+        const action = document.getElementById('linkActionSelect').value;
+        if (!event || !action) { showToast('select both event and action', 2000); return; }
+        const res = await apiFetch('/link', {
+          method: 'POST',
+          body: JSON.stringify({ event, action })
+        });
+        closeModal();
+        if (res.ok) { showToast(`linked ${event} → ${action}`); loadLinks(); }
+        else showToast(`❌ ${res.data?.error || 'link failed'}`, 4000);
+      });
+    });
+  }
+
+  // ---------- init ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTriggers();
+    loadActions();
+    loadLinks();
+
+    document.getElementById('refreshTriggersBtn').addEventListener('click', loadTriggers);
+    document.getElementById('newActionBtn').addEventListener('click', showNewActionModal);
+    document.getElementById('newLinkBtn').addEventListener('click', showNewLinkModal);
+  });
+
+  window.closeModal = closeModal;
+</script>
+</body>
+</html>
