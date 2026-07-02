@@ -31,17 +31,18 @@ public:
     /// Initialize with system registries
     void setRegistries(
         shared_ptr<TriggerList> triggers,
-        shared_ptr<ActionList> actions
+        shared_ptr<ActionList> actions,
+        shared_ptr<TargetList> targets
     ) {
-        targets_ = make_shared<TargetList>();
         triggers_ = triggers;
         triggers->setEventQueue(shared_from_this());
         actions_ = actions;
+        targets_ = targets;
     }
 
+    ///targets
     /// Register a target's event subscriptions
     void subscribeTarget(shared_ptr<Target> target);
-
     /// Unsubscribe a target
     void unsubscribeTarget(const string& target_name);
 
@@ -49,19 +50,18 @@ public:
     /// Used by triggers to emit events
     void sendEvent(Event &evn);
 
-    /// Push an event into the queue for async processing
-    void pushEvent(Event &evn);
-
     /// Process a trigger event: find linked actions and send their cmds
     /// This implements the trigger -> action -> events -> targets pipeline
     void processTriggerEvent(Event trigger_event);
 
+
+    /// own async eventing
+    /// Push an event into the queue for async processing
+    void pushEvent(Event &evn);
     /// Start the background event processing thread
     void start();
-
     /// Stop the background event processing thread
     void stop();
-
     /// Process all pending events (called by worker thread)
     void processLoop();
 

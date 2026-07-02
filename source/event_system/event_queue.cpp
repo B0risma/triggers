@@ -9,12 +9,10 @@ EventQueue::~EventQueue() {
     stop();
 }
 
+
 void EventQueue::subscribeTarget(shared_ptr<Target> target) {
     if (!target) return;
-    // Also add to TargetList if not already there
-    if (targets_) {
-        targets_->add(target);
-    }
+    targets_->add(target);
     // Subscribe target to its supported event keys
     for (const auto& event_key : target->supported_rules) {
         subscriptions_[event_key].push_back(target->name);
@@ -25,15 +23,13 @@ void EventQueue::subscribeTarget(shared_ptr<Target> target) {
 }
 
 void EventQueue::unsubscribeTarget(const string& target_name) {
-    if (targets_) {
-        auto tgt = targets_->find(target_name);
-        if (tgt) {
-            for (const auto& event_key : tgt->supported_rules) {
-                auto& subs = subscriptions_[event_key];
-                std::erase(subs, target_name);
-            }
-            targets_->remove(target_name);
+    auto tgt = targets_->find(target_name);
+    if (tgt) {
+        for (const auto& event_key : tgt->supported_rules) {
+            auto& subs = subscriptions_[event_key];
+            std::erase(subs, target_name);
         }
+        targets_->remove(target_name);
     }
 }
 
@@ -77,34 +73,13 @@ void EventQueue::deliverToTargets(Command evn) {
     auto it = subscriptions_.find(rule_key);
     if (it != subscriptions_.end()) {
         for (const auto& target_name : it->second) {
-            if (targets_) {
-                auto tgt = targets_->find(target_name);
-                if (tgt) {
-                    cout << "EventQueue: delivering to target '" << target_name << "'\n";
-                    tgt->procEvent(evn);
-                }
+            auto tgt = targets_->find(target_name);
+            if (tgt) {
+                cout << "EventQueue: delivering to target '" << target_name << "'\n";
+                tgt->procEvent(std::move(evn));
             }
         }
     }
-
-    // Also find targets subscribed to the broad type (e.g. "analitics:" for all analitics events)
-    // string broad_key = cmd.type + ":";
-    // auto broad_it = subscriptions_.find(broad_key);
-    // if (broad_it != subscriptions_.end()) {
-    //     for (const auto& target_name : broad_it->second) {
-    //         if (targets_) {
-    //             auto tgt = targets_->find(target_name);
-    //             if (tgt) {
-    //                 // Avoid double delivery if already delivered via exact key
-    //                 if (it == subscriptions_.end() ||
-    //                     std::find(it->second.begin(), it->second.end(), target_name) == it->second.end()) {
-    //                     cout << "EventQueue: delivering (broad) to target '" << target_name << "'\n";
-    //                     tgt->procEvent(evn);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 void EventQueue::start() {

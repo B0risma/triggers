@@ -244,8 +244,8 @@ void test_trigger_creation() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        // auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         auto gt = make_shared<GPIOTrigger>("gpio_emit");
         gt->setEventQueue(queue);
@@ -421,7 +421,8 @@ void test_event_queue() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         auto target = make_shared<TestTarget>("queue_target");
         queue->subscribeTarget(target);
@@ -432,7 +433,8 @@ void test_event_queue() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         // Create a target
         auto target = make_shared<TestTarget>("pipeline_target");
@@ -475,7 +477,8 @@ void test_full_system() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         // Create target
         auto target = make_shared<TestTarget>("integration_target");
@@ -511,7 +514,8 @@ void test_full_system() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         // Create two targets
         auto t1 = make_shared<TestTarget>("multi_t1");
@@ -561,7 +565,8 @@ void test_fire_detector() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        queue->setRegistries(triggers, actions);
+        auto targets = make_shared<TargetList>();
+        queue->setRegistries(triggers, actions, targets);
 
         auto fd = make_shared<FireDetector>("test_fd");
         queue->subscribeTarget(fd);
