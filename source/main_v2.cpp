@@ -33,8 +33,7 @@ int main() {
     auto targets  = EventsCore::instance().targetList().lock();
 
     auto switches = make_shared<VswitchList>();
-    switches->que = queue;
-    switches->trgList = triggers;
+    switches->setTriggerList(triggers);
 
     // --- 3. Create and register Trigger examples ---
     // GPIO triggers: pins "in1" and "in2"

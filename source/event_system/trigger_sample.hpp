@@ -69,25 +69,30 @@ struct Vswitch : public GPIOTrigger{
 };
 
 struct VswitchList{
-    map<string, shared_ptr<Vswitch>> list;
-    shared_ptr<TriggerList> trgList;
-    shared_ptr<EventQueue> que;
+
+    void setTriggerList(weak_ptr<TriggerList> trgList){
+        trgList_ = trgList;
+        auto list_strong = trgList.lock();
+        if(list_strong && !list.empty()){
+            for(const auto trig_node : list){
+                list_strong->add(trig_node.second);
+            }
+        }
+    }
 
     void add(json data){
         auto sw = make_shared<Vswitch>(data.at("name"));
         sw->state = data.at("state");
         list[sw->name] = sw;
+        auto trgList = trgList_.lock();
         if(trgList){
             trgList->add(sw);
-        }
-        if(que) {
-            sw->setEventQueue(que);
         }
     }
 
     void del(string name){
         auto count = list.erase(name);
-        trgList->remove(name);
+        if(count && trgList_.lock()) trgList_.lock()->remove(name);
     }
 
     void set(json data){
@@ -100,6 +105,9 @@ struct VswitchList{
         }
     }
 
+private:
+    unordered_map<string, shared_ptr<Vswitch>> list;
+    weak_ptr<TriggerList> trgList_;
 };
 
 struct SheduleTrigger : public Trigger{
