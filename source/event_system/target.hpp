@@ -16,6 +16,7 @@ using namespace std;
 /// Targets are registered in TargetList and subscribe to event types they support.
 class Target {
 public:
+    using Ptr = shared_ptr<Target>;
     struct Fields{
         static constexpr auto name = "name";
         static constexpr auto suppported_rule = "supported_rules";
@@ -52,10 +53,8 @@ public:
 /// Targets are added/removed programmatically by the system.
 class TargetList {
 public:
-    using Ptr = shared_ptr<Target>;
-
     /// Add a target to the registry
-    void add(Ptr target) {
+    void add(Target::Ptr target) {
         if (!target) return;
         targets_[target->name] = target;
     }
@@ -66,14 +65,14 @@ public:
     }
 
     /// Find a target by name
-    Ptr find(const string& name) const {
+    Target::Ptr find(const string& name) const {
         auto it = targets_.find(name);
         return it != targets_.end() ? it->second : nullptr;
     }
 
     /// Get all targets that can handle a specific event key
-    vector<Ptr> findByRule(const string& rule_key) const {
-        vector<Ptr> result;
+    vector<Target::Ptr> findByRule(const string& rule_key) const {
+        vector<Target::Ptr> result;
         for (const auto& [_, tgt] : targets_) {
             if (tgt->canHandle(rule_key)) {
                 result.push_back(tgt);
@@ -83,7 +82,7 @@ public:
     }
 
     /// Get all targets
-    const unordered_map<string, Ptr>& all() const {
+    const unordered_map<string, Target::Ptr>& all() const {
         return targets_;
     }
 
@@ -96,6 +95,6 @@ public:
         return j;
     }
 
-private:
-    unordered_map<string, Ptr> targets_;
+protected:
+    unordered_map<string, Target::Ptr> targets_;
 };

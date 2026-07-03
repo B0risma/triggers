@@ -26,11 +26,11 @@ using namespace std::string_literals;
 using json = nlohmann::json;
 
 int main() {
-    SystemManager::instance().init();
-    auto queue    = SystemManager::instance().eventQueue();
-    auto actions  = SystemManager::instance().actionList();
-    auto triggers = SystemManager::instance().triggerList();
-    auto targets  = SystemManager::instance().targetList();
+    EventsCore::instance().init();
+    auto queue    = EventsCore::instance().eventQueue().lock();
+    auto actions  = EventsCore::instance().actionList().lock();
+    auto triggers = EventsCore::instance().triggerList().lock();
+    auto targets  = EventsCore::instance().targetList().lock();
 
     auto switches = make_shared<VswitchList>();
     switches->que = queue;
@@ -47,10 +47,10 @@ int main() {
 
     // --- 4. Create and register Target examples ---
     // Fire detector targets
-    auto fire_det1 = make_shared<FireDetector>("fire_detector_1");
-    auto fire_det2 = make_shared<FireDetector>("fire_detector_2");
-    queue->subscribeTarget(fire_det1);
-    queue->subscribeTarget(fire_det2);
+    auto fire_det1 = make_shared<FireDetector>("fire_detector");
+    auto weapon_det = make_shared<WeaponDetector>("weapon_detector");
+    targets->subscribe(fire_det1);
+    targets->subscribe(weapon_det);
 
     // --- 5. Start the EventQueue worker thread ---
     queue->start();

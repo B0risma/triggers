@@ -1,17 +1,18 @@
 #include "system_manager.hpp"
+#include "event_system/event_queue.hpp"
 
-SystemManager& SystemManager::instance() {
-    static SystemManager inst;
+EventsCore& EventsCore::instance() {
+    static EventsCore inst;
     return inst;
 }
 
-void SystemManager::init() {
+void EventsCore::init() {
     event_queue_  = make_shared<EventQueue>();
     trigger_list_ = make_shared<TriggerList>();
     action_list_  = make_shared<ActionList>();
-    target_list_  = make_shared<TargetList>();
+    target_list_  = make_shared<SubscribtionList>();
 
     // Wire cross-references
-    event_queue_->setRegistries(trigger_list_, action_list_, target_list_);
+    event_queue_->setRegistries(action_list_, target_list_);
     trigger_list_->setEventQueue(event_queue_);
 }

@@ -244,15 +244,16 @@ void test_trigger_creation() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         auto gt = make_shared<GPIOTrigger>("gpio_emit");
         gt->setEventQueue(queue);
         triggers->add(gt);
 
         auto t_targ = make_shared<TestTarget>("Target1");
-        queue->subscribeTarget(t_targ);
+        targets->subscribe(t_targ);
 
         Action test_act;
         test_act.name = "test";
@@ -421,11 +422,12 @@ void test_event_queue() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         auto target = make_shared<TestTarget>("queue_target");
-        queue->subscribeTarget(target);
+        targets->subscribe(target);
         // No direct way to verify subscription, but we can check it doesn't crash
     } END_TEST;
 
@@ -433,13 +435,14 @@ void test_event_queue() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         // Create a target
         auto target = make_shared<TestTarget>("pipeline_target");
         target->supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
-        queue->subscribeTarget(target);
+        targets->subscribe(target);
 
         // Create an action
         Action act;
@@ -477,13 +480,14 @@ void test_full_system() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         // Create target
         auto target = make_shared<TestTarget>("integration_target");
         target->supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
-        queue->subscribeTarget(target);
+        targets->subscribe(target);
 
         // Create action with Invalid-type rule (matches our test target)
         Action act;
@@ -514,16 +518,17 @@ void test_full_system() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         // Create two targets
         auto t1 = make_shared<TestTarget>("multi_t1");
         auto t2 = make_shared<TestTarget>("multi_t2");
         t1->supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
         t2->supported_rules = {Rule::ruleKey(RuleType::Toggle, TargetType::Invalid)};
-        queue->subscribeTarget(t1);
-        queue->subscribeTarget(t2);
+        targets->subscribe(t1);
+        targets->subscribe(t2);
 
         // Create action
         Action act;
@@ -565,11 +570,12 @@ void test_fire_detector() {
         auto queue = make_shared<EventQueue>();
         auto triggers = make_shared<TriggerList>();
         auto actions = make_shared<ActionList>();
-        auto targets = make_shared<TargetList>();
-        queue->setRegistries(triggers, actions, targets);
+        auto targets = make_shared<SubscribtionList>();
+        queue->setRegistries(actions, targets);
+        triggers->setEventQueue(queue);
 
         auto fd = make_shared<FireDetector>("test_fd");
-        queue->subscribeTarget(fd);
+        targets->subscribe(fd);
 
         // Create action with AnaliticCmd rule
         Action act;

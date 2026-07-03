@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <iterator>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -8,6 +10,8 @@
 #include <condition_variable>
 #include <atomic>
 #include <memory>
+#include <list>
+#include <functional>
 #include <functional>
 #include <iostream>
 #include "rule.hpp"
@@ -20,6 +24,8 @@
 using json = nlohmann::json;
 using namespace std;
 
+class SubscribtionList;
+
 /// EventQueue — central event connector and transmitter.
 /// Routes events from triggers through actions to targets.
 /// Maintains target subscriptions and processes event delivery.
@@ -30,21 +36,12 @@ public:
 
     /// Initialize with system registries
     void setRegistries(
-        shared_ptr<TriggerList> triggers,
         shared_ptr<ActionList> actions,
-        shared_ptr<TargetList> targets
+        shared_ptr<SubscribtionList> targets
     ) {
-        triggers_ = triggers;
-        triggers->setEventQueue(shared_from_this());
         actions_ = actions;
-        targets_ = targets;
+        subscribtions_ = targets;
     }
-
-    ///targets
-    /// Register a target's event subscriptions
-    void subscribeTarget(shared_ptr<Target> target);
-    /// Unsubscribe a target
-    void unsubscribeTarget(const string& target_name);
 
     /// Send an event immediately to all subscribed targets
     /// Used by triggers to emit events
@@ -69,12 +66,8 @@ private:
     /// Deliver a single event to matching targets
     void deliverToTargets(Command evn);
 
-    shared_ptr<TargetList> targets_;
-    shared_ptr<TriggerList> triggers_;
-    shared_ptr<ActionList> actions_;
-
-    // Target subscriptions: rule_key -> list of target names
-    unordered_map<string, vector<string>> subscriptions_; 
+    weak_ptr<ActionList> actions_;
+    weak_ptr<SubscribtionList> subscribtions_;
 
     // Async event queue
     queue<Event> pending_events_;
@@ -82,4 +75,64 @@ private:
     condition_variable queue_cv_;
     atomic<bool> running_{false};
     thread worker_thread_;
+};
+
+
+class SubscribtionList final : public TargetList{
+public:
+
+    void forEach(std::function<void(Target::Ptr)> f){
+        for(const auto& pair : targets_){
+            f(pair.second);
+        }
+    }
+
+    void forEachByRule(const std::string& rule_key, std::function<void(Target::Ptr)> f){
+        const auto tgs = findByRule(rule_key);
+        std::for_each(tgs.cbegin(), tgs.cend(), f);
+    }
+
+    std::list<Target::Ptr> findByRule(const string &rule_key)const{
+        auto it_ = subscriptions_.find(rule_key);
+        if(it_ == subscriptions_.end()) return {};
+        const auto& tg_list = it_->second;
+        std::list<Target::Ptr> ret;
+        std::for_each(tg_list.cbegin(), tg_list.cend(),[&](const std::string& tg_name){
+            auto tg_ptr = find(tg_name);
+            if(tg_ptr) ret.push_back(tg_ptr);
+        });
+        return ret;
+    }
+
+    void subscribe(Target::Ptr target) {
+        if(!target) return;
+        if(targets_.count(target->name)) {
+            cout << __PRETTY_FUNCTION__ << ": existed " << target->name << endl;
+            return;
+        }
+        TargetList::add(target);
+        for (const auto& rule_key : target->supported_rules) {
+            subscriptions_[rule_key].push_back(target->name);
+        }
+        cout << "EventQueue: subscribed target '" << target->name
+                << "' (" /*<< target->type_name*/ << ") for "
+                << target->supported_rules.size() << " event types\n";
+    }
+
+    /// Remove a target by name
+    void remove(const string& name) {
+        auto tgt = find(name);
+
+        if(tgt){
+            for (const auto& rule_key : tgt->supported_rules) {
+                auto& subs = subscriptions_[rule_key];
+                std::erase(subs, name);
+            }
+            TargetList::remove(name);
+        }
+    }
+private:
+    using TargetList::add;
+    // rule_key -> target names
+    unordered_map<string, vector<string>> subscriptions_; 
 };

@@ -1,4 +1,5 @@
 #include "event_queue.hpp"
+#include "event_system/target.hpp"
 #include "rule.hpp"
 #include "event_system/event.hpp"
 #include <algorithm>
@@ -10,28 +11,28 @@ EventQueue::~EventQueue() {
 }
 
 
-void EventQueue::subscribeTarget(shared_ptr<Target> target) {
-    if (!target) return;
-    targets_->add(target);
-    // Subscribe target to its supported event keys
-    for (const auto& event_key : target->supported_rules) {
-        subscriptions_[event_key].push_back(target->name);
-    }
-    cout << "EventQueue: subscribed target '" << target->name
-         << "' (" /*<< target->type_name*/ << ") for "
-         << target->supported_rules.size() << " event types\n";
-}
+// void EventQueue::subscribeTarget(shared_ptr<Target> target) {
+//     if (!target) return;
+//     targets_->add(target);
+//     // Subscribe target to its supported event keys
+//     for (const auto& rule_key : target->supported_rules) {
+//         subscriptions_[rule_key].push_back(target->name);
+//     }
+//     cout << "EventQueue: subscribed target '" << target->name
+//          << "' (" /*<< target->type_name*/ << ") for "
+//          << target->supported_rules.size() << " event types\n";
+// }
 
-void EventQueue::unsubscribeTarget(const string& target_name) {
-    auto tgt = targets_->find(target_name);
-    if (tgt) {
-        for (const auto& event_key : tgt->supported_rules) {
-            auto& subs = subscriptions_[event_key];
-            std::erase(subs, target_name);
-        }
-        targets_->remove(target_name);
-    }
-}
+// void EventQueue::unsubscribeTarget(const string& target_name) {
+//     auto tgt = targets_->find(target_name);
+//     if (tgt) {
+//         for (const auto& rule_key : tgt->supported_rules) {
+//             auto& subs = subscriptions_[rule_key];
+//             std::erase(subs, target_name);
+//         }
+//         targets_->remove(target_name);
+//     }
+// }
 
 void EventQueue::sendEvent(Event &evn) {
     cout << "EventQueue::sendCmd: " << evn.toString() << endl;
@@ -54,8 +55,9 @@ void EventQueue::processTriggerEvent(Event trigger_event) {
     // deliverToTargets(trigger_event);
 
     // Then, find all actions linked to this trigger and execute their cmds
-    if (actions_) {
-        auto linked_actions = actions_->getActionsForEvn(trigger_event);
+    auto actions = actions_.lock();
+    if (actions) {
+        auto linked_actions = actions->getActionsForEvn(trigger_event);
         for (const auto* action : linked_actions) {
             cout << "EventQueue: executing action '" << action->name
                  << "' with " << action->rules.size() << " cmds\n";
@@ -68,18 +70,14 @@ void EventQueue::processTriggerEvent(Event trigger_event) {
 
 void EventQueue::deliverToTargets(Command evn) {
     const string rule_key = evn.first.key();
-
-    // Find targets subscribed to this exact event key
-    auto it = subscriptions_.find(rule_key);
-    if (it != subscriptions_.end()) {
-        for (const auto& target_name : it->second) {
-            auto tgt = targets_->find(target_name);
-            if (tgt) {
-                cout << "EventQueue: delivering to target '" << target_name << "'\n";
-                tgt->procEvent(std::move(evn));
-            }
+    auto subscribtions = subscribtions_.lock();
+    if(!subscribtions) return;
+    subscribtions->forEachByRule(rule_key, [cmd = std::move(evn)](Target::Ptr tg_ptr){
+        if(tg_ptr){
+            cout << "EventQueue: delivering to target '" << tg_ptr->name << "'\n";
+            tg_ptr->procEvent(std::move(cmd));
         }
-    }
+    });
 }
 
 void EventQueue::start() {
