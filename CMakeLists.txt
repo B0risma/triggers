@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(server_v2 LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Original V1 server (rule-based)
@@ -16,7 +16,8 @@ add_executable(server_v2 ${CMAKE_SOURCE_DIR}/source/main_v2.cpp
     source/event_system/trigger.cpp
     source/event_system/api_handler.cpp
     source/event_system/rule.cpp
-    source/event_system/system_manager.cpp)
+    source/event_system/system_manager.cpp
+    source/event_system/optional.hpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 include_directories(${CMAKE_SOURCE_DIR}/source)
