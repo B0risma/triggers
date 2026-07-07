@@ -6,7 +6,8 @@
 #include "json.hpp"
 #include "enum.h"
 #include "event.hpp"
-#include "result.hpp"
+#include "optional.hpp"
+#include "json_fields.h"
 
 
 using json = nlohmann::json;
@@ -27,14 +28,7 @@ BETTER_ENUM(RuleType, uint8_t, Toggle, OneShot, Number, Preset);//...
 */
 //! As like as Command temmplate - rule for executing something
 struct Rule {
-    static constexpr const char* key_delimiter = ":";
-
-    struct Fields {
-        static constexpr auto rule_type = "rule_type";
-        static constexpr auto target_type = "target_type";
-        static constexpr auto target = "target";
-    };
-
+    static const char* key_delimiter;
 
     RuleType type = RuleType::Toggle;      ///< Cmd type for target routing
     TargetType target_type = TargetType::Invalid;   ///< addition field for routing - not used now
@@ -56,9 +50,9 @@ struct Rule {
     */
     json toJson() const {
         json tmp{
-            {Fields::rule_type, type._to_string()},
-            {Fields::target, target},
-            {Fields::target_type, target_type._to_string()}
+            {Fields::Rule::rule_type, type._to_string()},
+            {Fields::Rule::target, target},
+            {Fields::Rule::target_type, target_type._to_string()}
         };
         tmp.update(data, true);
         return tmp;

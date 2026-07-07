@@ -130,37 +130,37 @@ void test_rule_creation() {
 
     TEST("Rule fromJson - Alarm") {
         json j = {
-            {Rule::Fields::rule_type, (+RuleType::Toggle)._to_string()},
-            {Rule::Fields::target_type, (+TargetType::Alarm)._to_string()},
-            {Rule::Fields::target, (+AlarmTarget::WhiteLight)._to_string()}
+            {Fields::Rule::rule_type, (+RuleType::Toggle)._to_string()},
+            {Fields::Rule::target_type, (+TargetType::Alarm)._to_string()},
+            {Fields::Rule::target, (+AlarmTarget::WhiteLight)._to_string()}
         };
         auto opt = Rule::fromJson(j);
-        ASSERT(opt.has_value(), "fromJson should return valid Rule");
+        ASSERT(opt, "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Alarm), "parsed target_type should be Alarm");
         ASSERT(opt->type == (+RuleType::Toggle), "Must be toggle");
     } END_TEST;
 
     TEST("Rule fromJson - Video") {
         json j = {
-            {Rule::Fields::rule_type, (+RuleType::Preset)._to_string()},
-            {Rule::Fields::target_type, (+TargetType::Video)._to_string()},
+            {Fields::Rule::rule_type, (+RuleType::Preset)._to_string()},
+            {Fields::Rule::target_type, (+TargetType::Video)._to_string()},
             {"preset_on", "3"},
             {"preset_off", "7"}
         };
         auto opt = Rule::fromJson(j);
-        ASSERT(opt.has_value(), "fromJson should return valid Rule");
+        ASSERT(opt, "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Video), "parsed target_type should be Video");
         ASSERT(opt->type == (+RuleType::Preset), "Must be Preset");
     } END_TEST;
 
     TEST("Rule fromJson - Analitic") {
         json j = {
-            {Rule::Fields::rule_type, (+RuleType::Toggle)._to_string()},    
-            {Rule::Fields::target_type, (+TargetType::Analitic)._to_string()},
+            {Fields::Rule::rule_type, (+RuleType::Toggle)._to_string()},    
+            {Fields::Rule::target_type, (+TargetType::Analitic)._to_string()},
             {"target", "Fire"}
         };
         auto opt = Rule::fromJson(j);
-        ASSERT(opt.has_value(), "fromJson should return valid Rule");
+        ASSERT(opt, "fromJson should return valid Rule");
         ASSERT(opt->target_type == (+TargetType::Analitic), "parsed target_type should be Analitic");
         ASSERT(opt->type == (+RuleType::Toggle), "Must be toggle");
     } END_TEST;
@@ -172,13 +172,13 @@ void test_rule_creation() {
             {"target", ""}
         };
         auto opt = Rule::fromJson(j);
-        ASSERT(!opt.has_value(), "fromJson with invalid types should return nullopt");
+        ASSERT(!opt, "fromJson with invalid types should return nullopt");
     } END_TEST;
 
     TEST("Rule fromJson - Missing fields returns nullopt") {
         json j = {{"rule_type", "Toggle"}}; // missing target_type
         auto opt = Rule::fromJson(j);
-        ASSERT(!opt.has_value(), "fromJson with missing fields should return nullopt");
+        ASSERT(!opt, "fromJson with missing fields should return nullopt");
     } END_TEST;
 }
 
@@ -260,8 +260,8 @@ void test_trigger_creation() {
         test_act.rules.push_back(TestTarget::supportedRuleTemplate());
         actions->addAction(test_act);
         json link = {
-            {EventActionLink::evn_key_f, gt->evnKey()},
-            {EventActionLink::action_f, test_act.name}
+            {Fields::Link::evn_key, gt->evnKey()},
+            {Fields::Link::action, test_act.name}
         };
         actions->addLink(EventActionLink::fromJson(link));
 
@@ -311,16 +311,16 @@ void test_action_creation() {
 
         json j = act.toJson();
         ASSERT(j["name"] == "test_action", "toJson should contain name");
-        ASSERT(j.contains(Action::rules_f), "toJson should contain rules field");
+        ASSERT(j.contains(Fields::Action::rules), "toJson should contain rules field");
     } END_TEST;
 
     TEST("Action fromJson") {
         json j;
         j["name"] = "from_json_action";
-        j[Action::rules_f] = {{
-            {Rule::Fields::rule_type, "Toggle"},
-            {Rule::Fields::target_type, "Alarm"},
-            {Rule::Fields::target, "WhiteLight"}
+        j[Fields::Action::rules] = {{
+            {Fields::Rule::rule_type, "Toggle"},
+            {Fields::Rule::target_type, "Alarm"},
+            {Fields::Rule::target, "WhiteLight"}
         }};
 
         Action act = Action::fromJson(j);
@@ -331,9 +331,9 @@ void test_action_creation() {
     TEST("Action fromJson with invalid rules throws") {
         json j;
         j["name"] = "bad_action";
-        j[Action::rules_f] = {{
-            {Rule::Fields::rule_type, "Invalid"},
-            {Rule::Fields::target_type, "Invalid"}
+        j[Fields::Action::rules] = {{
+            {Fields::Rule::rule_type, "Invalid"},
+            {Fields::Rule::target_type, "Invalid"}
         }};
         try {
             Action::fromJson(j);
@@ -345,7 +345,7 @@ void test_action_creation() {
 
     TEST("Action fromJson missing name throws") {
         json j;
-        j[Action::rules_f] = json::array();
+        j[Fields::Action::rules] = json::array();
         try {
             Action::fromJson(j);
             ASSERT(false, "fromJson without name should throw");

@@ -71,7 +71,8 @@ public:
         auto it = triggers_.find(name);
         if (it != triggers_.end()) {
             auto& list = by_kind_[it->second->evn_type._to_string()];
-            std::erase(list, it->second);
+            auto er_start = std::remove(list.begin(), list.end(), it->second);
+            list.erase(er_start, list.end());
             triggers_.erase(it);
         }
     }
@@ -98,7 +99,9 @@ public:
     /// {"analitics":["fire","smoke","cross"], "gpio":["in1","in2"], ...}
     json toKindListJson() const {
         json j;
-        for (const auto& [kind, trigs] : by_kind_) {
+        for (const auto& pair : by_kind_) {
+            const auto &kind = pair.first;
+            const auto &trigs = pair.second;
             json subtypes = json::array();
             for (const auto& t : trigs) {
                 subtypes.push_back(json{{"name",t->name}, {"event", t->evnKey()}});

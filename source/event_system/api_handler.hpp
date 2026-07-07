@@ -52,15 +52,15 @@ public:
     void handleLinkDelete(const httplib::Request& req, httplib::Response& res);
 
     // URI constants
-    static constexpr auto trigger_URI = "/trigger"s;
-    static constexpr auto action_URI = "/action"s;
-    static constexpr auto link_URI = "/link"s;
-    static constexpr auto switch_URI = "/switch"s;
+    static constexpr auto trigger_URI = "/trigger";
+    static constexpr auto action_URI = "/action";
+    static constexpr auto link_URI = "/link";
+    static constexpr auto switch_URI = "/switch";
 
 private:
     shared_ptr<TriggerList> triggers_;
     shared_ptr<ActionList> actions_;
     shared_ptr<EventQueue> queue_;
     shared_ptr<VswitchList> switches_;
-    static constexpr auto json_content = "text/json"s;
+    static constexpr auto json_content = "text/json";
 };

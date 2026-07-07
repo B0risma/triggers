@@ -7,6 +7,7 @@
 #include "json.hpp"
 #include "event.hpp"
 #include "rule.hpp"
+#include "json_fields.h"
 // #include "v2.h"
 
 using json = nlohmann::json;
@@ -17,25 +18,24 @@ using namespace std;
 /// are sent to the EventQueue for processing by targets.
 /// Actions ARE editable via webAPI (POST create, DELETE remove).
 struct Action {
-    static constexpr auto rules_f = "rules";
     string name;            ///< Action identifier (e.g. "act_set2")
     vector<Rule> rules;     ///< Set of events to send when action is triggered
 
     json toJson() const {
         json j;
-        j["name"] = name;
+        j[Fields::Action::name] = name;
         json cmds_j = json::array();
         for (const auto& cmd : rules) {
             cmds_j.push_back(cmd.toJson());
         }
-        j[rules_f] = cmds_j;
+        j[Fields::Action::rules] = cmds_j;
         return j;
     }
 
     static Action fromJson(const json& j) noexcept(false){
         Action a;
         a.name = j.at("name");
-        const auto& rules = j.at(rules_f);
+        const auto& rules = j.at(Fields::Action::rules);
         if(!rules.is_array() || rules.empty()) throw logic_error("empty rules");
         for (const auto& cmd_j : rules) {
             a.rules.push_back(Rule::fromJson(cmd_j).value());
@@ -44,12 +44,13 @@ struct Action {
     }
 };
 
+ 
+
+
 /// Trigger-Action link: associates a trigger with an action,
 /// optionally with conditions for emitting.
 // bind trigger events to actions
 struct EventActionLink {
-    static constexpr auto evn_key_f = "event";
-    static constexpr auto action_f = "action";
     string evn_key;     ///< Trigger name
     string action;      ///< Action name
     // for what?
@@ -57,8 +58,8 @@ struct EventActionLink {
 
     json toJson() const {
         json j;
-        j[evn_key_f] = evn_key;
-        j[action_f] = action;
+        j[Fields::Link::evn_key] = evn_key;
+        j[Fields::Link::action] = action;
         // if (!condition.empty()) {
             // j["condition"] = condition;
         // }
@@ -67,8 +68,8 @@ struct EventActionLink {
 
     static EventActionLink fromJson(const json& j) {
         EventActionLink link;
-        link.evn_key = j.at(evn_key_f);
-        link.action = j.at(action_f);
+        link.evn_key = j.at(Fields::Link::evn_key);
+        link.action = j.at(Fields::Link::action);
         // link.condition = j.value("condition", "");
         return link;
     }
@@ -98,7 +99,9 @@ public:
         actions_.erase(name);
         // Also remove any links referencing this action
         vector<string> links_to_remove;
-        for (const auto& [key, link] : links_) {
+        for (const auto& pair : links_) {
+            const auto & key = pair.first;
+            const auto & link = pair.second;
             if (link.action == name) {
                 links_to_remove.push_back(key);
             }
@@ -129,7 +132,9 @@ public:
     vector<const Action*> getActionsForEvn(const Signal& evn){
         vector<const Action *> res;
         const auto evn_key = evn.key();
-        for (const auto& [key, link] : links_) {
+        for (const auto& pair : links_) {
+            const auto & key = pair.first;
+            const auto & link = pair.second;
             if (link.evn_key == evn_key) {
                 auto it = actions_.find(link.action);
                 if (it != actions_.end()) {
@@ -155,7 +160,9 @@ public:
     /// Serialize actions to JSON
     json actionsToJson() const {
         json j;
-        for (const auto& [name, action] : actions_) {
+        for (const auto& pair : actions_) {
+            const auto & name = pair.first;
+            const auto & action = pair.second;
             j[name] = action.toJson();
         }
         return j;
@@ -164,8 +171,8 @@ public:
     /// Serialize links to JSON
     json linksToJson() const {
         json j = json::array();
-        for (const auto& [key, link] : links_) {
-            j.push_back(link.toJson());
+        for (const auto& link : links_) {
+            j.push_back(link.second.toJson());
         }
         return j;
     }

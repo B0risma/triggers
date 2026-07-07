@@ -123,10 +123,12 @@ public:
     void remove(const string& name) {
         auto tgt = find(name);
 
+
         if(tgt){
             for (const auto& rule_key : tgt->supported_rules) {
                 auto& subs = subscriptions_[rule_key];
-                std::erase(subs, name);
+                auto it = std::remove(subs.begin(), subs.end(), name);
+                subs.erase(it, subs.end());
             }
             TargetList::remove(name);
         }

@@ -7,14 +7,17 @@
 #include <string>
 #include <utility>
 
+
+const char* Rule::key_delimiter = ":";
+
 using namespace std;
-std::optional<Rule> Rule::fromJson(const json& j) noexcept{
+optional<Rule> Rule::fromJson(const json& j) noexcept{
     try{
         optional<Rule> tmp;
         
-        const auto r_type = RuleType::_from_string(j.at(Fields::rule_type).get_ref<const string&>().c_str());
-        const auto t_type = TargetType::_from_string(j.at(Fields::target_type).get_ref<const string&>().c_str());
-        const string target = j.value(Fields::target, "");
+        const auto r_type = RuleType::_from_string(j.at(Fields::Rule::rule_type).get_ref<const string&>().c_str());
+        const auto t_type = TargetType::_from_string(j.at(Fields::Rule::target_type).get_ref<const string&>().c_str());
+        const string target = j.value(Fields::Rule::target, "");
         switch(t_type._value){
             case TargetType::Invalid:{
                 cout << __PRETTY_FUNCTION__ << "WARN: test only\n";

@@ -73,9 +73,9 @@ public:
     /// Get all targets that can handle a specific event key
     vector<Target::Ptr> findByRule(const string& rule_key) const {
         vector<Target::Ptr> result;
-        for (const auto& [_, tgt] : targets_) {
-            if (tgt->canHandle(rule_key)) {
-                result.push_back(tgt);
+        for (const auto& tgt : targets_) {
+            if (tgt.second->canHandle(rule_key)) {
+                result.push_back(tgt.second);
             }
         }
         return result;
@@ -89,8 +89,8 @@ public:
     /// Serialize to JSON (for GET response)
     json toJson() const {
         json j = json::array();
-        for (const auto& [name, tgt] : targets_) {
-            j.push_back(tgt->toJson());
+        for (const auto& tgt : targets_) {
+            j.push_back(tgt.second->toJson());
         }
         return j;
     }
