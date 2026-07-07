@@ -6,6 +6,8 @@
 #include "json.hpp"
 #include "enum.h"
 #include "event.hpp"
+#include "result.hpp"
+
 
 using json = nlohmann::json;
 using namespace std;
@@ -25,7 +27,7 @@ BETTER_ENUM(RuleType, uint8_t, Toggle, OneShot, Number, Preset);//...
 */
 //! As like as Command temmplate - rule for executing something
 struct Rule {
-    static constexpr const string key_delimiter = ":";
+    static constexpr const char* key_delimiter = ":";
 
     struct Fields {
         static constexpr auto rule_type = "rule_type";
@@ -40,7 +42,7 @@ struct Rule {
     json data = json::object();        ///< type specific data arguments: detector name for Analitics, preset for Video ...
 
     string toString() const {
-        return  target_type._to_string() + key_delimiter + 
+        return  target_type._to_string() + string(key_delimiter) + 
                 target + key_delimiter + 
                 string(type._to_string()) + 
                 key_delimiter + data.dump();
@@ -62,14 +64,14 @@ struct Rule {
         return tmp;
     }
 
-    static std::optional<Rule> fromJson(const json& j) noexcept;
+    static optional<Rule> fromJson(const json& j) noexcept;
 
     /// Composite key for routing: type+target
     string key() const {
         return ruleKey(type, target_type, target);
     }
     static string ruleKey(const RuleType& type, const TargetType& target_type, const string & target = {}){
-        return target_type._to_string() + key_delimiter + 
+        return target_type._to_string() + std::string(key_delimiter) + 
                 target + key_delimiter +
                 type._to_string();
     }
@@ -196,4 +198,4 @@ standart range struct for Rules
         }
     };
 
-using Command = std::pair<Rule, Event>;
+using Command = std::pair<Rule, Signal>;

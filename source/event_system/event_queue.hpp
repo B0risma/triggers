@@ -45,16 +45,16 @@ public:
 
     /// Send an event immediately to all subscribed targets
     /// Used by triggers to emit events
-    void sendEvent(Event &evn);
+    void sendEvent(Signal &evn);
 
     /// Process a trigger event: find linked actions and send their cmds
     /// This implements the trigger -> action -> events -> targets pipeline
-    void processTriggerEvent(Event trigger_event);
+    void processTriggerEvent(Signal trigger_event);
 
 
     /// own async eventing
     /// Push an event into the queue for async processing
-    void pushEvent(Event &evn);
+    void pushEvent(Signal &evn);
     /// Start the background event processing thread
     void start();
     /// Stop the background event processing thread
@@ -70,7 +70,7 @@ private:
     weak_ptr<SubscribtionList> subscribtions_;
 
     // Async event queue
-    queue<Event> pending_events_;
+    queue<Signal> pending_events_;
     mutex queue_mutex_;
     condition_variable queue_cv_;
     atomic<bool> running_{false};

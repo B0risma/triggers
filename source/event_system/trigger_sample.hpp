@@ -30,7 +30,7 @@ public:
         name = pin_id;
         evn_type = EventType::GPIO;
     }
-    virtual Event createEvent(bool new_state)const {
+    virtual Signal createEvent(bool new_state)const {
         return GPIOEvent(evnKey(), new_state);
     }
     /// Simulate a state change on the GPIO pin.
@@ -62,7 +62,7 @@ struct Vswitch : public GPIOTrigger{
         name = pin_name;
         evn_type = EventType::VirtSwitch;
     }
-    virtual Event createEvent(bool new_state)const override{
+    virtual Signal createEvent(bool new_state)const override{
         return VswitchEvent(evnKey(), new_state);
     }
 
@@ -137,7 +137,7 @@ private:
 
         last_state = state;
 
-        Event evn(evnKey());
+        Signal evn(evnKey());
         evn.type = EventType::Shedule;
         evn.data["active_p"] = state; //in_period
 

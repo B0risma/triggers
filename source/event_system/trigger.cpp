@@ -5,7 +5,7 @@ void Trigger::setEventQueue(shared_ptr<EventQueue> q) {
     if (q) e_queue = q;
 }
 
-void Trigger::emitEvent(Event&& evn) const {
+void Trigger::emitEvent(Signal&& evn) const {
     auto strong_q = e_queue.lock();
     if (strong_q) {
         strong_q->processTriggerEvent(std::move(evn));

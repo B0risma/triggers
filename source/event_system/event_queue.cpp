@@ -34,12 +34,12 @@ EventQueue::~EventQueue() {
 //     }
 // }
 
-void EventQueue::sendEvent(Event &evn) {
+void EventQueue::sendEvent(Signal &evn) {
     cout << "EventQueue::sendCmd: " << evn.toString() << endl;
     processTriggerEvent(std::move(evn));
 }
 
-void EventQueue::pushEvent(Event& evn) {
+void EventQueue::pushEvent(Signal& evn) {
     {
         lock_guard<mutex> lock(queue_mutex_);
         pending_events_.emplace(std::move(evn));
@@ -47,7 +47,7 @@ void EventQueue::pushEvent(Event& evn) {
     queue_cv_.notify_one();
 }
 
-void EventQueue::processTriggerEvent(Event trigger_event) {
+void EventQueue::processTriggerEvent(Signal trigger_event) {
     cout << "EventQueue::processTriggerEvent: trigger='" /*<< trigger_name*/
          << "' event=" << trigger_event.toString() << endl;
 
@@ -98,7 +98,7 @@ void EventQueue::stop() {
 
 void EventQueue::processLoop() {
     while (running_.load()) {
-        auto evn = Event::dummyEvent();
+        auto evn = Signal::dummyEvent();
         {
             unique_lock<mutex> lock(queue_mutex_);
             queue_cv_.wait(lock, [this]() {

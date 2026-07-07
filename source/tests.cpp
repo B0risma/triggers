@@ -52,7 +52,7 @@ static int tests_failed = 0;
 // ============================================================
 void test_event_creation() {
     TEST("Event creation with src_key") {
-        Event evt("test_source");
+        Signal evt("test_source");
         ASSERT(evt.key() == "test_source", "key should match constructor arg");
         ASSERT(evt.type == (+EventType::NoType), "default type should be NoType");
     } END_TEST;
@@ -79,7 +79,7 @@ void test_event_creation() {
     } END_TEST;
 
     TEST("Event toString and key") {
-        Event evt("src1");
+        Signal evt("src1");
         evt.data["val"] = 42;
         string s = evt.toString();
         ASSERT(s.find("src1") != string::npos, "toString should contain src_key");
@@ -87,7 +87,7 @@ void test_event_creation() {
     } END_TEST;
 
     TEST("Dummy event") {
-        Event dummy = Event::dummyEvent();
+        Signal dummy = Signal::dummyEvent();
         ASSERT(dummy.key() == "invalid", "dummy event key should be 'invalid'");
     } END_TEST;
 }
@@ -389,7 +389,7 @@ void test_action_creation() {
         actions->addLink(link);
 
         // Create a dummy event with the matching key to test getActionsForEvn
-        Event evt("test_trigger");
+        Signal evt("test_trigger");
         auto found = actions->getActionsForEvn(evt);
         ASSERT(found.size() >= 1, "getActionsForEvn should find at least 1 action");
         ASSERT(found[0]->name == "linked_action", "found action name should match");
@@ -407,7 +407,7 @@ void test_action_creation() {
         actions->addLink(link);
 
         // Verify link exists before delete
-        Event evt("trig_del");
+        Signal evt("trig_del");
         ASSERT(actions->getActionsForEvn(evt).size() == 1, "link should exist before delete");
         actions->removeLink("trig_del", "link_del");
         ASSERT(actions->getActionsForEvn(evt).empty(), "link should not exist after delete");

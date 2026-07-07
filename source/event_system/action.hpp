@@ -126,7 +126,7 @@ public:
         links_.erase(key);
     }
 
-    vector<const Action*> getActionsForEvn(const Event& evn){
+    vector<const Action*> getActionsForEvn(const Signal& evn){
         vector<const Action *> res;
         const auto evn_key = evn.key();
         for (const auto& [key, link] : links_) {

@@ -30,9 +30,9 @@ using Ptr = shared_ptr<Trigger>;
     void setEventQueue(shared_ptr<EventQueue> q);
 
     /// Emit an event into the event queue. Override to define trigger behavior.
-    void emitEvent(Event&& evn) const;
-    inline void emitEvent(const Event& evn) const{
-        Event cp = evn;
+    void emitEvent(Signal&& evn) const;
+    inline void emitEvent(const Signal& evn) const{
+        Signal cp = evn;
         emitEvent(std::move(cp));
     }
 
